@@ -817,7 +817,7 @@ public class ActivateOnLaunchViewModel : BaseViewModel
         get => _isShowAllMapsChecked;
         set
         {
-                if (SetProperty(ref _isShowAllMapsChecked, value)) Set(nameof(_isShowAllMapsChecked), value);
+                if (SetProperty(ref _isShowAllMapsChecked, value)) Set(nameof(IsShowAllMapsChecked), value);
         }
     }
     
@@ -828,7 +828,7 @@ public class ActivateOnLaunchViewModel : BaseViewModel
         get => _isShowAllGracesChecked;
         set
         {
-            if (SetProperty(ref _isShowAllGracesChecked, value)) Set(nameof(_isShowAllGracesChecked), value);
+            if (SetProperty(ref _isShowAllGracesChecked, value)) Set(nameof(IsShowAllGracesChecked), value);
         }
     }
     
