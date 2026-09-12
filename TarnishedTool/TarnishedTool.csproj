@@ -110,6 +110,13 @@
             <SubType>Designer</SubType>
         </ApplicationDefinition>
         <Compile Include="Behaviors\TextBoxBehavior.cs" />
+        <Compile Include="Control\Consent.cs" />
+        <Compile Include="Control\ControlClient.cs" />
+        <Compile Include="Control\EffectRunner.cs" />
+        <Compile Include="Control\GameOperations.cs" />
+        <Compile Include="Control\Operations.cs" />
+        <Compile Include="Control\Protocol.cs" />
+        <Compile Include="Control\RestoreLog.cs" />
         <Compile Include="Behaviors\WindowResizeBehavior.cs" />
         <Compile Include="Controls\CoordinateDisplay.xaml.cs">
           <DependentUpon>CoordinateDisplay.xaml</DependentUpon>
@@ -377,6 +384,7 @@
         <Compile Include="ViewModels\ChrInsWindowViewModel.cs" />
         <Compile Include="ViewModels\AttackInfoViewModel.cs" />
         <Compile Include="ViewModels\BaseViewModel.cs" />
+        <Compile Include="ViewModels\ControlViewModel.cs" />
         <Compile Include="ViewModels\CreateCustomWarpViewModel.cs" />
         <Compile Include="ViewModels\CreateLoadoutViewModel.cs" />
         <Compile Include="ViewModels\CustomWarpImportItem.cs" />
@@ -412,6 +420,9 @@
         </Compile>
         <Compile Include="Views\Tabs\EnemyTab.xaml.cs">
           <DependentUpon>EnemyTab.xaml</DependentUpon>
+        </Compile>
+        <Compile Include="Views\Tabs\ControlTab.xaml.cs">
+          <DependentUpon>ControlTab.xaml</DependentUpon>
         </Compile>
         <Compile Include="Views\Tabs\ItemTab.xaml.cs">
           <DependentUpon>ItemTab.xaml</DependentUpon>
@@ -535,6 +546,7 @@
         </Compile>
         <Page Include="Views\Tabs\AdvancedTab.xaml" />
         <Page Include="Views\Tabs\EnemyTab.xaml" />
+        <Page Include="Views\Tabs\ControlTab.xaml" />
         <Page Include="Views\Tabs\ItemTab.xaml" />
         <Page Include="Views\Tabs\SettingsTab.xaml" />
         <Page Include="Views\Tabs\TargetTab.xaml" />

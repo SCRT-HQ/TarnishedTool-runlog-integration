@@ -182,5 +182,22 @@ public class HotkeyManager
         SaveHotkeys();
     }
 
+    /// <summary>
+    /// Press a registered action by name, from something that is not a
+    /// keyboard.
+    ///
+    /// The actions are already a dictionary of named things the tool can
+    /// do; this is the same dictionary read by anything else that has a
+    /// reason to press one. It says whether the name was registered rather
+    /// than throwing, since a caller asking for something this build does
+    /// not have is an ordinary answer, not a fault.
+    /// </summary>
+    public bool TryInvoke(string actionId)
+    {
+        if (string.IsNullOrEmpty(actionId) || !_actions.TryGetValue(actionId, out var action)) return false;
+        Application.Current.Dispatcher.BeginInvoke(action);
+        return true;
+    }
+
     public void SetKeyboardHandling(bool isEnabled) => _keyboardHook.Handling = isEnabled;
 }

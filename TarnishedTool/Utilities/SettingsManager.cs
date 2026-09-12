@@ -130,6 +130,13 @@ public class SettingsManager
     public bool ActivateOnLaunchEnabled { get; set; }
     public string ActivateOnLaunchActionIds { get; set; } = "";
 
+    // The Control tab. The address carries a key, so it is the one setting
+    // in this file worth keeping out of a screenshot.
+    public string ControlAddress { get; set; } = "";
+    public string ControlSeat { get; set; } = "";
+    public bool ControlConnectOnStart { get; set; }
+    public string ControlAllowedOperations { get; set; } = "";
+
 
     private static string SettingsPath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
