@@ -105,6 +105,16 @@ public class AiWindowViewModel : BaseViewModel, IDisposable
 
     public ObservableCollection<CoolTimeEntry> CoolTimes { get; } = new();
 
+    private bool _isShowStringIndexedNumbersEnabled;
+
+    public bool IsShowStringIndexedNumbersEnabled
+    {
+        get => _isShowStringIndexedNumbersEnabled;
+        set => SetProperty(ref _isShowStringIndexedNumbersEnabled, value);
+    }
+
+    public ObservableCollection<StringIndexedNumberPair> StringIndexedNumbers { get; } = new();
+
     private bool _isShowLuaNumbersEnabled;
 
     public bool IsShowLuaNumbersEnabled
@@ -198,6 +208,7 @@ public class AiWindowViewModel : BaseViewModel, IDisposable
         }
 
         if (IsShowCoolTimesEnabled) UpdateCoolTimes();
+        if (IsShowStringIndexedNumbersEnabled) UpdateStringIndexedNumbers();
         if (IsShowLuaNumbersEnabled) UpdateLuaNumbers();
         if (IsShowLuaTimersEnabled) UpdateLuaTimers();
         if (IsShowSpEffectObservesEnabled) UpdateSpEffectObserves();
@@ -360,6 +371,27 @@ public class AiWindowViewModel : BaseViewModel, IDisposable
         }
     }
 
+    private void UpdateStringIndexedNumbers()
+    {
+        var entries = _aiService.GetStringIndexedNumberPairs(_aiThink);
+
+        while (StringIndexedNumbers.Count > entries.Count)
+            StringIndexedNumbers.RemoveAt(StringIndexedNumbers.Count - 1);
+
+        for (int i = 0; i < entries.Count; i++)
+        {
+            if (i < StringIndexedNumbers.Count)
+            {
+                StringIndexedNumbers[i].StringIndex = entries[i].StringIndex;
+                StringIndexedNumbers[i].Value = entries[i].Value;
+            }
+            else
+            {
+                StringIndexedNumbers.Add(entries[i]);
+            }
+        }
+    }
+
     private void UpdateLuaNumbers()
     {
         var numbers = _aiService.GetLuaNumbers(_aiThink);
@@ -496,6 +528,7 @@ public class AiWindowViewModel : BaseViewModel, IDisposable
         InterruptHistory.Clear();
         CoolTimes.Clear();
         SpEffectObserves.Clear();
+        StringIndexedNumbers.Clear();
         _lastInterrupts = 0;
 
         _goalDict.TryGetValue(_aiService.GetMainScriptGoalId(_aiThink), out var goalInfo);

@@ -328,6 +328,7 @@
         <Compile Include="Models\SpEffectObserve.cs" />
         <Compile Include="Models\SpiritAsh.cs" />
         <Compile Include="Models\Stats.cs" />
+        <Compile Include="Models\StringIndexedNumberPair.cs" />
         <Compile Include="Models\Weapon.cs" />
         <Compile Include="Models\Weather.cs" />
         <Compile Include="Services\ActionRequestService.cs" />
@@ -461,6 +462,9 @@
         <Compile Include="Views\Windows\AiOverlay\SpEffectsOverlayWindow.xaml.cs">
           <DependentUpon>SpEffectsOverlayWindow.xaml</DependentUpon>
         </Compile>
+        <Compile Include="Views\Windows\AiOverlay\StringIndexedNumbersOverlayWindow.xaml.cs">
+          <DependentUpon>StringIndexedNumbersOverlayWindow.xaml</DependentUpon>
+        </Compile>
         <Compile Include="Views\Windows\BossSelectionWindow.xaml.cs">
           <DependentUpon>BossSelectionWindow.xaml</DependentUpon>
         </Compile>
@@ -547,6 +551,7 @@
         <Page Include="Views\Windows\AiOverlay\LuaTimersOverlayWindow.xaml" />
         <Page Include="Views\Windows\AiOverlay\SpEffectObserversOverlayWindow.xaml" />
         <Page Include="Views\Windows\AiOverlay\SpEffectsOverlayWindow.xaml" />
+        <Page Include="Views\Windows\AiOverlay\StringIndexedNumbersOverlayWindow.xaml" />
         <Page Include="Views\Windows\BossSelectionWindow.xaml" />
         <Page Include="Views\Windows\ChrInsWindow.xaml" />
         <Page Include="Views\Windows\AttackInfoWindow.xaml" />

@@ -51,6 +51,8 @@ public partial class AiOverlayToolbar : Window
                 new InterruptsOverlayWindow(_viewModel, () => OnOverlayClosed(InterruptsCheckBox)),
             [SpEffectsCheckBox] =
                 () => new SpEffectsOverlayWindow(_viewModel, () => OnOverlayClosed(SpEffectsCheckBox)),
+            [StringIndexedNumbersCheckBox] = () =>
+            new StringIndexedNumbersOverlayWindow(_viewModel, () => OnOverlayClosed(StringIndexedNumbersCheckBox)),
         };
         _viewModelSetters = new()
         {
@@ -61,6 +63,7 @@ public partial class AiOverlayToolbar : Window
             [SpEffectObservesCheckBox] = v => _viewModel.IsShowSpEffectObservesEnabled = v,
             [InterruptsCheckBox] = v => _viewModel.IsShowInterruptsEnabled = v,
             [SpEffectsCheckBox] = v => _viewModel.IsShowSpEffectsEnabled = v,
+            [StringIndexedNumbersCheckBox] = v => _viewModel.IsShowStringIndexedNumbersEnabled = v,
         };
 
         Loaded += OnLoaded;
@@ -81,6 +84,7 @@ public partial class AiOverlayToolbar : Window
         SpEffectObservesCheckBox.IsChecked = _viewModel.IsShowSpEffectObservesEnabled;
         InterruptsCheckBox.IsChecked = _viewModel.IsShowInterruptsEnabled;
         SpEffectsCheckBox.IsChecked = _viewModel.IsShowSpEffectsEnabled;
+        StringIndexedNumbersCheckBox.IsChecked = _viewModel.IsShowStringIndexedNumbersEnabled;
 
         foreach (var cb in _overlayFactories.Keys)
             if (cb.IsChecked == true)

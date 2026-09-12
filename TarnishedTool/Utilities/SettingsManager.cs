@@ -117,6 +117,10 @@ public class SettingsManager
     public double AiOverlaySpEffectsLeft { get; set; }
     public double AiOverlaySpEffectsTop { get; set; }
     public double AiOverlaySpEffectsOpacity { get; set; }
+    
+    public double AiOverlayStringIndexedNumbersLeft { get; set; }
+    public double AiOverlayStringIndexedNumbersTop { get; set; }
+    public double AiOverlayStringIndexedNumbersOpacity { get; set; }
 
     public double ParamEditorWindowWidth { get; set; }
     public double ParamEditorWindowHeight { get; set; }

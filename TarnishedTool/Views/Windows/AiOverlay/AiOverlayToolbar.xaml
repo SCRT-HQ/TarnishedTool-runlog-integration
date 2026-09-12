@@ -103,6 +103,11 @@
                           Style="{StaticResource OverlayCheckBox}"
                           Checked="CheckBox_Changed"
                           Unchecked="CheckBox_Changed"/>
+                <CheckBox x:Name="StringIndexedNumbersCheckBox" 
+                          Content="String Indexed Numbers" 
+                          Style="{StaticResource OverlayCheckBox}"
+                          Checked="CheckBox_Changed"
+                          Unchecked="CheckBox_Changed"/>
             </WrapPanel>
             
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">

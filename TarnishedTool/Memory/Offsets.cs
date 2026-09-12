@@ -312,6 +312,7 @@ namespace TarnishedTool.Memory
                 public const int LuaNumbersArray = 0x6CC;
                 public const int AnimationRequest = 0xC428;
                 public const int TargetingSystem = 0xC480;
+                public const int StringIndexedNumbersArray = 0x7D0;
 
                 public static int SpEffectObserveComp => Version switch
                 {
@@ -413,6 +414,13 @@ namespace TarnishedTool.Memory
                     public const int AnimationId = 0x0;
                     public const int TimeSinceLastAttack = 0x4;
                     public const int Cooldown = 0x8;
+                }
+
+                public static class StringIndexedNumberEntry
+                {
+                    public const int Value = 0x0;
+                    public const int StringIndex = 0x4;
+                    public const int Stride = 0x88;
                 }
             }
 
@@ -1515,7 +1523,6 @@ namespace TarnishedTool.Memory
             };
 
 
-
             // Functions
             Functions.GraceWarp = moduleBase + Version switch
             {
@@ -2126,7 +2133,6 @@ namespace TarnishedTool.Memory
             };
 
 
-
             // Hooks
             Hooks.UpdateCoords = moduleBase + Version switch
             {
@@ -2697,7 +2703,6 @@ namespace TarnishedTool.Memory
             };
 
 
-            
             Hooks.SpeedyBuff = moduleBase + Version switch
             {
                 Version1_2_0 => 0x4248E0,

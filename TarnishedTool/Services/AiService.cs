@@ -16,6 +16,7 @@ public class AiService : IAiService
 {
     public const int NumOfLuaTimers = 16;
     public const int NumOfLuaNumbers = 64;
+    public const int MaxStringIndexedNumbers = 256;
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(8) };
     private readonly IMemoryService _memoryService;
     private readonly List<Action> _subscribers = new();
@@ -89,6 +90,30 @@ public class AiService : IAiService
         return childGoals;
     }
 
+    public List<StringIndexedNumberPair> GetStringIndexedNumberPairs(nint aiThink)
+{
+    var result = new List<StringIndexedNumberPair>();
+    var baseAddr = aiThink + ChrIns.AiThinkOffsets.StringIndexedNumbersArray;
+    const int stride = ChrIns.AiThinkOffsets.StringIndexedNumberEntry.Stride;
+
+    var block = new MemoryBlock(_memoryService.ReadBytes(baseAddr, MaxStringIndexedNumbers * stride));
+
+    for (var i = 0; i < MaxStringIndexedNumbers; i++)
+    {
+        var offset = i * stride;
+        var stringIndex = block.GetString(
+            offset + ChrIns.AiThinkOffsets.StringIndexedNumberEntry.StringIndex, 128);
+
+        if (string.IsNullOrEmpty(stringIndex))
+            break;
+
+        var value = block.Get<float>(offset + ChrIns.AiThinkOffsets.StringIndexedNumberEntry.Value);
+        result.Add(new StringIndexedNumberPair(stringIndex, value));
+    }
+
+    return result;
+}
+
     public float[] GetLuaTimers(nint aiThink) =>
         _memoryService.ReadArray<float>(aiThink + ChrIns.AiThinkOffsets.LuaTimersArray, NumOfLuaTimers);
 
@@ -143,7 +168,7 @@ public class AiService : IAiService
 
         var listStart = attackComp + ChrIns.AiThinkOffsets.AttackComp.CoolTimeList;
         var block = new MemoryBlock(_memoryService.ReadBytes(listStart, coolTimeCount * CoolTimeListStride));
-        
+
         var coolTimeList = new List<CoolTimeEntry>(coolTimeCount);
         for (var i = 0; i < coolTimeCount; i++)
         {
@@ -181,8 +206,8 @@ public class AiService : IAiService
         _memoryService.AllocateAndExecute(bytes);
         _memoryService.FreeMem(scriptPtr);
     }
-    
-        public void RequestAttackCooldown(nint aiThink, uint attackId)
+
+    public void RequestAttackCooldown(nint aiThink, uint attackId)
     {
         var funcAddr = Functions.AiRequestAttackCooldown;
         if (funcAddr == 0) return;

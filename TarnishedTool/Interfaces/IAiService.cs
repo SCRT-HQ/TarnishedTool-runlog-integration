@@ -20,6 +20,7 @@ public interface IAiService
     void UnregisterInterruptListener(Action callBack);
     ulong GetInterrupts(nint aiThink);
     List<CoolTimeEntry> GetCoolTimeItemList(nint aiThink);
+    List<StringIndexedNumberPair> GetStringIndexedNumberPairs(nint aiThink);
     int GetMainScriptGoalId(nint aiThink);
     void InjectAiScript(byte[] script);
     void RequestAttackCooldown(nint aiThink, uint attackId);
