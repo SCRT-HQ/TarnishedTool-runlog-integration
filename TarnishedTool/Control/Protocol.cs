@@ -117,6 +117,10 @@ public static class Frames
                     return new Incoming { Kind = "apply", Apply = frame };
 
                 case "revert":
+                    // The reserved id "*" means everything in force; a
+                    // run that has ended sends that rather than naming
+                    // each effect, since only the tool knows what it is
+                    // still holding.
                     var id = StringOf(root, "id");
                     if (string.IsNullOrEmpty(id)) return new Incoming { Kind = "unreadable", Text = "a revert with no id" };
                     return new Incoming { Kind = "revert", RevertId = id };

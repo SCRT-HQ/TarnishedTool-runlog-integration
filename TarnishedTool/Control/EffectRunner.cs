@@ -179,7 +179,21 @@ public sealed class EffectRunner
         Changed?.Invoke();
     }
 
-    public void Revert(string id) => Revert(id, quiet: false);
+    /// <summary>The id that means all of them, whatever they were.</summary>
+    public const string Everything = "*";
+
+    public void Revert(string id)
+    {
+        // A run that has ended says this rather than naming every effect
+        // it applied, since it is the tool that knows what is in force.
+        if (string.Equals(id, Everything, StringComparison.Ordinal))
+        {
+            RevertAll("the source asked");
+            return;
+        }
+
+        Revert(id, quiet: false);
+    }
 
     private void Revert(string id, bool quiet)
     {
