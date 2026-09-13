@@ -105,17 +105,21 @@ public sealed class EffectRunner
 
     public void Apply(ApplyFrame frame)
     {
+        // Every refusal is said twice: once back to whatever asked, and
+        // once here. A person watching this tab do nothing needs to know
+        // why, and the answer travelling back over the socket is not
+        // somewhere they can see.
         foreach (var call in frame.Ops)
         {
             if (!_ops.Has(call.Op))
             {
-                Answer(frame.Id, false, null, "this build has no " + call.Op);
+                Refuse(frame, "this build has no " + call.Op);
                 return;
             }
 
             if (!_consent.Allows(call.Op))
             {
-                Answer(frame.Id, false, null, call.Op + " is switched off here");
+                Refuse(frame, call.Op + " is switched off here");
                 return;
             }
         }
@@ -129,7 +133,7 @@ public sealed class EffectRunner
         {
             if (impatient)
             {
-                Answer(frame.Id, false, null, "the game is not ready to be moved");
+                Refuse(frame, "the game is not ready to be moved");
                 return;
             }
 
@@ -168,9 +172,7 @@ public sealed class EffectRunner
                 // Half an effect is not an effect. What landed comes back
                 // off before anyone is told it failed.
                 Undo(effect);
-                var why = ex is OperationRefused ? ex.Message : call.Op + " failed: " + ex.Message;
-                Log("Refused " + Name(frame) + ": " + why);
-                Answer(frame.Id, false, null, why);
+                Refuse(frame, ex is OperationRefused ? ex.Message : call.Op + " failed: " + ex.Message);
                 return;
             }
         }
@@ -329,6 +331,13 @@ public sealed class EffectRunner
         Group = e.Group,
         Steps = e.Reverts.Select(r => new StoredStep { Op = r.Op, Args = r.Args }).ToList(),
     }));
+
+    /// <summary>Told to whoever asked, and to whoever is watching this tab.</summary>
+    private void Refuse(ApplyFrame frame, string why)
+    {
+        Log("Refused " + Name(frame) + ": " + why);
+        Answer(frame.Id, false, null, why);
+    }
 
     private static string Name(ApplyFrame frame) => string.IsNullOrEmpty(frame.Label) ? frame.Id : frame.Label;
 

@@ -183,6 +183,52 @@ Anyone who tests this against a real Streamer.bot, please open an issue saying w
 
 The intention is to ship a Streamer.bot import string here: the actions, the broadcast, and a reward or two already wired. It is not written yet, for the reason above. It will be built by hand in a real instance and exported, rather than generated, because their import format is opaque and has broken compatibility before; and it will say which release it was built against.
 
+## Runlog
+
+The controller this tab was written against, and the one that is known to work. Runlog is a dice engine for challenge runs: a pack says what can happen, the run rolls it, and a **control profile** says what each result means to a tool. The profile lives on Runlog's side rather than in a file here, so a mapping somebody got wrong is fixed in a browser instead of in a new build of this.
+
+Setting it up, once:
+
+1. Open the run, then **Settings → Stream → Chat**, and make a **watch key**. It is shown once. That key is what lets a tool read the run; the separate press key is for chat and is not used here.
+2. Under **Settings → Stream → Control**, copy the address and put your watch key where it says `REPLACE-WITH-YOUR-WATCH-KEY`. It looks like `wss://runlog.scrthq.com/ws?k=…&as=control`.
+3. Paste that into **Address** on the Control tab, and press **Connect**. The status goes to Connected and the log says so.
+4. Tick the operations the profile needs, under **What a source may do here**. Switching things on and off is toggles and numbers, which are on already; anything that moves you, hands you an item or presses a button is off until you say otherwise.
+
+Then, per run:
+
+1. In **Settings → Stream → Control**, press **Import** and choose a profile. The Elden Ring packs ship one in `packs/profiles` in the Runlog repository. The panel will say if a rule can never fire against the pack you are playing, which is the usual sign that a profile and a pack have drifted apart.
+2. Play. A result lands, the tool performs it, and the log says what it did and for how long.
+
+A profile names the tool it was written for. If it says `TarnishedTool` and something else connects, the run sends it nothing and says so in the tool's log rather than leaving it sitting there looking connected and idle.
+
+### More than one player
+
+Everyone else at the table attaches on the run's **live link** instead of a watch key, which the host shares with them anyway, and adds their own name:
+
+```
+wss://runlog.scrthq.com/ws?run=<runId>&t=<token>&as=control&seat=Mira
+```
+
+Put the same name in the **Player** box. A rule that names a seat then reaches that person only; a rule that names nobody reaches everyone, which is how one curse lands on four machines at the same moment. A tool that never said which player it is hears only the ones meant for everybody.
+
+### Telling the run you died
+
+Tick **Say when I die**. It travels on the socket already open, so there is nothing else to set up, and it arrives as an ask in the run's tray for the host to accept. The run has to be taking asks, under **Settings → Stream → Chat**, since attaching a tool is not the same as being allowed to move somebody's run.
+
+### When nothing happens
+
+The log on the Control tab is the first place to look, and it says which of these it is.
+
+| It says | What it means |
+| --- | --- |
+| Nothing at all | Nothing is connected, or the run has no profile. Check the status, then check that Import actually loaded one. |
+| `This run is set up for …` | The profile names a different tool, so nothing will be sent at all. |
+| `Refused …: … is switched off here` | The operation is unticked in the list above the log. |
+| `Waiting for the game: …` | The game is not attached, or is on a loading screen. It waits forty-five seconds and then gives up. |
+| `Refused …: the game is not ready to be moved` | A warp arrived while the game could not take one. Warps refuse rather than queue. |
+| `Refused …: this build has no …` | The profile names an operation this build does not have. |
+| `Refused …: no such flag` or `no such value` | The profile names a setting this build does not have, usually a typo. |
+
 ## The operations this build offers
 
 The authoritative list is the `ops` in `hello`, and the Control tab shows the same list with what is switched on. As of this build:
