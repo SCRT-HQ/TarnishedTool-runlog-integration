@@ -13,21 +13,22 @@
 ## This fork: a Control tab
 
 This is a fork of [borgCode/TarnishedTool](https://github.com/borgCode/TarnishedTool)
-with one addition: a **Control** tab, which lets something outside the
-tool apply effects to the game. A run of dice on a website, a chat bot, a
-stream deck, a script of forty lines.
+with one addition: a Control tab, which lets something outside the tool
+apply effects to the game. A run of dice on a website, a chat bot, a
+stream deck, a script of your own.
 
-Nothing in the tab names any particular service. It dials an address you
-paste in, says what it can do, performs what comes back, and puts
-everything back afterwards. What a source may do is yours to decide, per
-operation, in the tab; warps, items and button presses start switched
-off.
+Nothing in the tab names any particular service. It dials a WebSocket
+address you paste in, says what it can do, performs what comes back, and
+puts everything back afterwards. What a source may do is yours to decide,
+operation by operation, in the tab; warps, items and button presses start
+switched off.
 
-See **[docs/controlling.md](docs/controlling.md)** to drive it from
-something of your own, including a controller in forty lines of Node.
+[docs/controlling.md](docs/controlling.md) is how to drive it from
+something of your own. It includes a working controller short enough to
+read.
 
-Everything upstream says about offline use goes double here: an address
-in the tab makes it feel like a service, and it is not one.
+Everything upstream says about offline use goes double here. An address
+in a tab makes this feel like a service, and it is not one.
 
 Work lives on the `integration` branch; `master` tracks upstream
 unchanged.
