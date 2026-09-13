@@ -45,7 +45,9 @@ jobs:
         id: name
         shell: pwsh
         run: |
-          $stamp = [datetime]::UtcNow.ToString("yyyyMMdd-HHmm")
+          # UTC, said out loud, because a runner is always UTC and a
+          # build made in the evening otherwise downloads dated tomorrow.
+          $stamp = [datetime]::UtcNow.ToString("yyyyMMdd-HHmm") + "Z"
           "artifact=TarnishedTool-$stamp" >> $env:GITHUB_OUTPUT
           Write-Host "This build downloads as TarnishedTool-$stamp.zip"
 
