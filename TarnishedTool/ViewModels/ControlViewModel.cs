@@ -73,10 +73,14 @@ public class ControlViewModel : BaseViewModel
     private readonly IMemoryService _memory;
     private readonly IStateService _state;
     private readonly DispatcherTimer _dropTimer;
+    private readonly DeathWatcher _deaths;
+    private readonly Presser _presser;
 
     private bool _isLoaded;
     private string _status = "Off";
     private string _address;
+    private string _pressAddress;
+    private bool _tellsOfDeath;
     private string _seat;
     private bool _connectOnStart;
     private int _liveCount;
@@ -92,6 +96,7 @@ public class ControlViewModel : BaseViewModel
         IItemService items,
         IMemoryService memory,
         IStateService state,
+        IGameTickService tick,
         HotkeyManager hotkeys)
     {
         _memory = memory;
@@ -125,7 +130,18 @@ public class ControlViewModel : BaseViewModel
         // borrowed and never gave back.
         _runner.RestoreFromLastTime();
 
+        // The other direction. A source may move this game because
+        // somebody here said it could; this end may only mention things,
+        // and only what is switched on below.
+        _presser = new Presser(() => PressAddress, () => Seat);
+        _presser.Logged += Say;
+        _deaths = new DeathWatcher(tick, playerService, IsReady);
+        _deaths.Died += () => _presser.Press("died");
+
         _address = SettingsManager.Default.ControlAddress;
+        _pressAddress = SettingsManager.Default.ControlPressAddress;
+        _tellsOfDeath = SettingsManager.Default.ControlTellsOfDeath;
+        if (_tellsOfDeath) _deaths.Start();
         _seat = SettingsManager.Default.ControlSeat;
         _connectOnStart = SettingsManager.Default.ControlConnectOnStart;
 
@@ -150,7 +166,11 @@ public class ControlViewModel : BaseViewModel
             _isLoaded = false;
             _runner.RevertAll("the game closed");
         });
-        state.Subscribe(State.AppClosing, () => _runner.RevertAll("the tool is closing"));
+        state.Subscribe(State.AppClosing, () =>
+        {
+            _deaths.Stop();
+            _runner.RevertAll("the tool is closing");
+        });
 
         ConnectCommand = new DelegateCommand(Connect, () => !IsConnected);
         DisconnectCommand = new DelegateCommand(Disconnect, () => IsConnected);
@@ -193,6 +213,38 @@ public class ControlViewModel : BaseViewModel
         {
             if (!SetProperty(ref _address, value)) return;
             SettingsManager.Default.ControlAddress = value;
+            SettingsManager.Default.Save();
+        }
+    }
+
+    /// <summary>
+    /// Where to mention what happened in the game, with its own key in it.
+    ///
+    /// A different key from the one that listens, on purpose: what watches
+    /// must never also press, and the address that does the pressing is
+    /// the one worth keeping to yourself.
+    /// </summary>
+    public string PressAddress
+    {
+        get => _pressAddress;
+        set
+        {
+            if (!SetProperty(ref _pressAddress, value)) return;
+            SettingsManager.Default.ControlPressAddress = value;
+            SettingsManager.Default.Save();
+        }
+    }
+
+    /// <summary>Say so when the player dies. Off until somebody says otherwise.</summary>
+    public bool TellsOfDeath
+    {
+        get => _tellsOfDeath;
+        set
+        {
+            if (!SetProperty(ref _tellsOfDeath, value)) return;
+            if (value) _deaths.Start();
+            else _deaths.Stop();
+            SettingsManager.Default.ControlTellsOfDeath = value;
             SettingsManager.Default.Save();
         }
     }

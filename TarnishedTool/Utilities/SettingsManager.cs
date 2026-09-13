@@ -136,6 +136,8 @@ public class SettingsManager
     public string ControlSeat { get; set; } = "";
     public bool ControlConnectOnStart { get; set; }
     public string ControlAllowedOperations { get; set; } = "";
+    public string ControlPressAddress { get; set; } = "";
+    public bool ControlTellsOfDeath { get; set; }
 
 
     private static string SettingsPath => Path.Combine(

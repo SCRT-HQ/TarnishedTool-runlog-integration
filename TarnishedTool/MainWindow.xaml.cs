@@ -132,7 +132,7 @@ namespace TarnishedTool
             ControlViewModel controlViewModel = new ControlViewModel(
                 playerViewModel, enemyViewModel, utilityViewModel, travelViewModel,
                 spEffectService, playerService, travelService, itemService,
-                _memoryService, _stateService, hotkeyManager
+                _memoryService, _stateService, gameTickService, hotkeyManager
             );
 
             SettingsViewModel settingsViewModel = new SettingsViewModel(

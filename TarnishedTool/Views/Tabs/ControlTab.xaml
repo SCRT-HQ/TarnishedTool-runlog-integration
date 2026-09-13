@@ -34,6 +34,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Address" VerticalAlignment="Center" />
@@ -44,6 +45,17 @@
                 <Button Content="Connect" Command="{Binding ConnectCommand}" Width="90" Margin="0,0,4,0" />
                 <Button Content="Disconnect" Command="{Binding DisconnectCommand}" Width="90" />
             </StackPanel>
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Tell it" VerticalAlignment="Center" />
+            <TextBox Grid.Row="2" Grid.Column="1"
+                     Text="{Binding PressAddress, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,0,8,4"
+                     ToolTip="Where to mention what happens in the game. A different key from the one above: what watches must never also press." />
+            <CheckBox Grid.Row="2" Grid.Column="2"
+                      Content="Say when I die"
+                      IsChecked="{Binding TellsOfDeath}"
+                      VerticalAlignment="Center"
+                      Margin="0,0,0,4" />
 
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Player" VerticalAlignment="Center" />
             <TextBox Grid.Row="1" Grid.Column="1"
