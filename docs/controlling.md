@@ -187,16 +187,11 @@ The intention is to ship a Streamer.bot import string here: the actions, the bro
 
 The controller this tab was written against, and the one that is known to work. Runlog is a dice engine for challenge runs: a pack says what can happen, the run rolls it, and a **control profile** says what each result means to a tool. The profile lives on Runlog's side rather than in a file here, so a mapping somebody got wrong is fixed in a browser instead of in a new build of this.
 
-Setting it up, once:
+Two things are being set up and they have different lifetimes, which is worth knowing before the steps: the address and the ticked operations belong to this machine and are remembered, and the profile belongs to one run. Both are reached from inside a run, because that is where the panel lives, but only one of them is per-run.
 
-1. Open the run, then **Settings → Stream → Control**, and press **Make a watch key**. The address finishes itself with the key in it: `wss://runlog.scrthq.com/ws?k=…&as=control`. Copy it. The key is shown this once, so if you lose the address, make another key and the old one stops working.
-2. Paste it into **Address** on the Control tab and press **Connect**. The status goes to Connected and the log says so.
-3. Tick the operations the profile needs, under **What a source may do here**. Switching things on and off is toggles and numbers, which are on already; anything that moves you, hands you an item or presses a button is off until you say otherwise.
+**On this machine, once.** In Runlog, open any run and go to **Settings → Stream → Control**. Press **Make a watch key**; the address completes itself with the key in it, `wss://runlog.scrthq.com/ws?k=…&as=control`, and you copy it. The key is shown that once, so if the address is lost, make another and the old one stops working. Paste it into **Address** on the Control tab, press **Connect**, and tick what you are willing to let a run do under **What a source may do here**. Switching settings and numbers is on already; anything that moves you, hands you an item or presses a button is off until you say so. The tool remembers all of it, so this does not come round again.
 
-Then, per run:
-
-1. In **Settings → Stream → Control**, press **Import** and choose a profile. The Elden Ring packs ship one in `packs/profiles` in the Runlog repository. The panel will say if a rule can never fire against the pack you are playing, which is the usual sign that a profile and a pack have drifted apart.
-2. Play. A result lands, the tool performs it, and the log says what it did and for how long.
+**In each run.** Under the same **Settings → Stream → Control**, pick the profile. A pack that ships one offers it in a press: *Use the one that ships with Elden Ring: Interference*. Otherwise choose from the list of built-in profiles, or **Import** a file somebody sent you. The panel says if a rule can never fire against the pack you are playing, which is the usual sign that a profile and a pack have drifted apart. Then play: a result lands, the tool performs it, and the log says what it did and for how long.
 
 A profile names the tool it was written for. If it says `TarnishedTool` and something else connects, the run sends it nothing and says so in the tool's log rather than leaving it sitting there looking connected and idle.
 
