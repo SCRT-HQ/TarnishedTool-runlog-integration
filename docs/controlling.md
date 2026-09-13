@@ -1,8 +1,10 @@
 # Driving this tool from something else
 
-The Control tab holds a WebSocket address and dials it. What is on the other end is not its business: it says what it can do, performs what it is asked for, and puts everything back afterwards. Runlog is one thing that can sit there. So is a chat bot, a stream deck, or a script you wrote this afternoon.
+The Control tab connects Tarnished Tool to a WebSocket server you name: Streamer.bot, a Runlog run, or anything else that speaks the protocol below. Once it is connected, whatever is on that server can change your game while you are playing it. Chat redeeming channel points, a Runlog run drawing a curse at the table, a button on a stream deck: any of them can take your dodge away for ninety seconds, drop you on the other side of the map, or hand you a Golden Seed.
 
-This is what the other end has to do.
+What is on the other end is not the tab's business, and that is the point of it. The tab says what it can do, performs what comes back, and puts everything back afterwards. A controller nobody has written yet will work with it without a new build of this.
+
+This is what that other end has to do.
 
 Offline only, as the [readme](../README.md) says. Worth one line here because this document is about connecting to a network and could be read the wrong way round: it is the game that goes offline, not the machine, and a controller reaching this tool over a socket is not the part that gets anybody banned.
 
