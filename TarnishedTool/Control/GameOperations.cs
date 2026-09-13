@@ -47,6 +47,18 @@ public sealed class GameOperations
     private readonly Lazy<List<Grace>> _graces = new(() => DataLoader.GetGraces().SelectMany(a => a.Value).ToList());
 
     /// <summary>
+    /// Every boss the tool can put somebody in front of, by name.
+    ///
+    /// The other half of the same argument as the graces: these are the
+    /// destinations worth naming that are not places anybody rests. A
+    /// run that wants to drop a player at Godrick has, until now, had to
+    /// ship a block id and three coordinates to say so, which is a thing
+    /// only a map can know and a thing that goes wrong quietly when the
+    /// game moves.
+    /// </summary>
+    private readonly Lazy<List<BlockWarp>> _bosses = new(() => DataLoader.GetBossWarps().SelectMany(a => a.Value).ToList());
+
+    /// <summary>
     /// Everything the tool knows how to hand over, by name.
     ///
     /// The same argument as the graces above. A source that wanted to
@@ -301,6 +313,28 @@ public sealed class GameOperations
             // somebody to the wrong side of the map, so it asks instead.
             if (found.Count > 1) throw new OperationRefused(name + " names " + found.Count + " graces; say which area");
             _travel.Warp(found[0]);
+        });
+
+        /**
+         * In front of a boss, by name.
+         *
+         * Same shape as a grace and for the same reason. Forty of these
+         * are the same fight in two places, so the area says which, and
+         * a name that still means two of them is refused rather than
+         * guessed: guessing puts somebody on the wrong side of the map.
+         */
+        registry.RegisterOneShot("warp.boss", args =>
+        {
+            var name = (args.Text("name") ?? string.Empty).Trim();
+            if (name.Length == 0) throw new OperationRefused("warp.boss wants a name");
+            var area = (args.Text("area") ?? string.Empty).Trim();
+            var found = _bosses.Value
+                .Where(b => string.Equals(b.Name, name, StringComparison.OrdinalIgnoreCase))
+                .Where(b => area.Length == 0 || string.Equals(b.MainArea, area, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (found.Count == 0) throw new OperationRefused("no boss called " + name + (area.Length > 0 ? " in " + area : string.Empty));
+            if (found.Count > 1) throw new OperationRefused(name + " names " + found.Count + " arenas; say which area");
+            _travel.WarpToBlockId(found[0].Position);
         });
 
         /**

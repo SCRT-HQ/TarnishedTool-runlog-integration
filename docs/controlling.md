@@ -237,6 +237,7 @@ The authoritative list is the `ops` in `hello`, and the Control tab shows the sa
 | `speffect.remove` | `id` | One way. |
 | `warp.position` | `block`, `x`, `y`, `z`, `angle` | One way, and off by default. |
 | `warp.grace` | `name`, `area` | Somewhere by name, from the tool's own list of every grace, including ones the player has never found. One way, off by default. |
+| `warp.boss` | `name`, `area` | In front of a boss by name, from the tool's own list of every arena it can reach. Same shape as `warp.grace`, and the area is needed for the same reason: several of these are the same fight in two places. One way, off by default. |
 | `player.drop` | `height` | Straight up from wherever they are, then gravity. Needs no map. One way, off by default. |
 | `item.give` | `id`, `quantity`, `ashOfWar` | By the game's own id. One way, off by default. |
 | `item.named` | `name`, `quantity` | By name, from the tool's own lists: consumables, materials, tears, talismans, arrows, spells, and the key items that are simply given. One way, off by default. |
