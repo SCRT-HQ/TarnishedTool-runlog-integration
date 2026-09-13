@@ -35,6 +35,7 @@ public sealed class GameOperations
     private readonly ITravelService _travel;
     private readonly IItemService _itemService;
     private readonly HotkeyManager _hotkeys;
+    private readonly Watches _watches;
     /// <summary>
     /// Every grace the tool knows, by area and by name.
     ///
@@ -136,13 +137,15 @@ public sealed class GameOperations
         IPlayerService playerService,
         ITravelService travelService,
         IItemService items,
-        HotkeyManager hotkeys)
+        HotkeyManager hotkeys,
+        Watches watches)
     {
         _spEffects = spEffects;
         _player = playerService;
         _travel = travelService;
         _itemService = items;
         _hotkeys = hotkeys;
+        _watches = watches;
 
         // What a run may switch on and off. The names are the tool's own
         // vocabulary rather than a pack's: a source maps its words to
@@ -297,6 +300,42 @@ public sealed class GameOperations
             var angle = args.Real("angle") ?? 0f;
             _travel.WarpToBlockId(new Position(block.Value, new Vector3(x.Value, y.Value, z.Value), angle));
         });
+
+        /**
+         * Watching, which is the only kind of operation that does nothing.
+         *
+         * A source asks to be told when something happens in the game, and
+         * hears about it once. Each returns a revert that takes the watch
+         * off again, so a watch put on for a scene comes off when that
+         * scene closes without anything here knowing what a scene is.
+         *
+         * What can be seen is what the game raises a flag for: a boss
+         * dying, an item the game files as an event being picked up, a
+         * grace lit for the first time. An ordinary enemy raises nothing,
+         * and this refuses rather than pretending.
+         */
+        registry.Register("watch.boss", args =>
+        {
+            var token = _watches.Boss(args.Text("name"), args.Text("area"));
+            return new[] { new RevertStep("watch.stop", "{\"token\":\"" + token + "\"}") };
+        });
+
+        registry.Register("watch.item", args =>
+        {
+            var token = _watches.Item(args.Text("category"), args.Text("name"));
+            return new[] { new RevertStep("watch.stop", "{\"token\":\"" + token + "\"}") };
+        });
+
+        registry.Register("watch.grace", args =>
+        {
+            var token = _watches.Grace(args.Text("name"), args.Text("area"));
+            return new[] { new RevertStep("watch.stop", "{\"token\":\"" + token + "\"}") };
+        });
+
+        // Not for a source to send: it is what the three above hand back,
+        // and what a revert replays. Taking off a watch that is already
+        // gone is not an error, since a revert can arrive twice.
+        registry.RegisterOneShot("watch.stop", args => _watches.Stop(args.Text("token")));
 
         /**
          * Somewhere by name, which is the only kind of somewhere a source

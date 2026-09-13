@@ -119,6 +119,7 @@
         <Compile Include="Control\Protocol.cs" />
         <Compile Include="Control\RestoreLog.cs" />
         <Compile Include="Control\Watchers.cs" />
+        <Compile Include="Control\Watches.cs" />
         <Compile Include="Behaviors\WindowResizeBehavior.cs" />
         <Compile Include="Controls\CoordinateDisplay.xaml.cs">
           <DependentUpon>CoordinateDisplay.xaml</DependentUpon>

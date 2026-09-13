@@ -74,6 +74,7 @@ public class ControlViewModel : BaseViewModel
     private readonly IStateService _state;
     private readonly DispatcherTimer _dropTimer;
     private readonly DeathWatcher _deaths;
+    private readonly Watches _watches;
 
     private bool _isLoaded;
     private string _status = "Off";
@@ -95,13 +96,24 @@ public class ControlViewModel : BaseViewModel
         IMemoryService memory,
         IStateService state,
         IGameTickService tick,
-        HotkeyManager hotkeys)
+        HotkeyManager hotkeys,
+        IEventLogReader eventLog)
     {
         _memory = memory;
         _state = state;
 
         _registry = new OperationRegistry();
-        _operations = new GameOperations(player, enemies, utility, travel, spEffects, playerService, travelService, items, hotkeys);
+        // What the game is asked to report on, and what happens when it
+        // does: a watch firing is the game settling an objective, which
+        // the run turns into the same ask a person pressing a button
+        // raises. Told, not counted: the run says which in a note.
+        _watches = new Watches(eventLog);
+        _watches.Fired += what =>
+        {
+            _client.Send(Frames.Event("settled", what));
+            Say("Told the run: " + what + ".");
+        };
+        _operations = new GameOperations(player, enemies, utility, travel, spEffects, playerService, travelService, items, hotkeys, _watches);
         _operations.RegisterOn(_registry);
 
         _consent = new Consent();
