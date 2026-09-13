@@ -33,8 +33,21 @@ jobs:
     name: Build
     runs-on: windows-latest
     timeout-minutes: 20
+    outputs:
+      artifact: ${{ steps.name.outputs.artifact }}
     steps:
       - uses: actions/checkout@v7
+
+      # Every artifact downloads as a zip named after itself, so a fixed
+      # name leaves a folder of TarnishedTool (1).zip through (9) with
+      # nothing to tell them apart. The minute it was built does that.
+      - name: Name this build
+        id: name
+        shell: pwsh
+        run: |
+          $stamp = [datetime]::UtcNow.ToString("yyyyMMdd-HHmm")
+          "artifact=TarnishedTool-$stamp" >> $env:GITHUB_OUTPUT
+          Write-Host "This build downloads as TarnishedTool-$stamp.zip"
 
       - uses: microsoft/setup-msbuild@v3
       - uses: NuGet/setup-nuget@v4
@@ -69,7 +82,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: TarnishedTool
+          name: ${{ steps.name.outputs.artifact }}
           path: TarnishedTool/bin/Release/TarnishedTool.exe
           if-no-files-found: error
           retention-days: 30
@@ -103,7 +116,7 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: TarnishedTool
+          name: ${{ needs.build.outputs.artifact }}
           path: out
 
       - name: Release
