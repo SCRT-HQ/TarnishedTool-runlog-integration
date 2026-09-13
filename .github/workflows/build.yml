@@ -33,8 +33,15 @@ jobs:
     name: Build
     runs-on: windows-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     outputs:
       artifact: ${{ steps.name.outputs.artifact }}
+    env:
+      # Read in the `if` of the signing step below. A build without the
+      # secret, a pull request from a fork, anybody's checkout, produces
+      # the same unsigned executable it always did rather than a failure.
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
     steps:
       - uses: actions/checkout@v7
 
@@ -82,10 +89,58 @@ jobs:
           Write-Host "TarnishedTool.exe is $mb MB"
           if ($mb -lt 4) { throw "$mb MB is too small: the dependencies are probably not packed in" }
 
+      # Signing, which is a key on somebody else's hardware.
+      #
+      # Not to get past SmartScreen, though it helps there in time. The
+      # reason is Defender: it quarantines the tool when it attaches,
+      # because writing another process's memory is what it watches for,
+      # and no signature stops a behavior rule. What a signature changes is
+      # what Microsoft can do about it. A false-positive submission for an
+      # unsigned file is allowed by hash, which covers one build; for a
+      # signed one it can be allowed by publisher, which covers every build
+      # after it. So this is the thing that makes the fix stick.
+      #
+      # Azure rather than SignPath, whose GitHub integration is built on
+      # trusted build systems and is not on the free plan. This signs the
+      # file in place, so there is no artifact to hand over and take back.
+      - name: Sign
+        if: env.AZURE_CLIENT_SECRET != ''
+        uses: azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          # Both are region-specific and have to match where the signing
+          # account was made, which is the usual first thing to be wrong.
+          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_CERTIFICATE_PROFILE }}
+          files: ${{ github.workspace }}\TarnishedTool\bin\Release\TarnishedTool.exe
+
+      # A signing step that silently produced nothing would ship an
+      # unsigned build under a release that says it is signed, and the
+      # place that is discovered is a tester's antivirus.
+      - name: The file anybody downloads
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item TarnishedTool/bin/Release/TarnishedTool.exe out/
+          if (-not $env:AZURE_CLIENT_SECRET) {
+            Write-Host "Unsigned: no signing secret on this build."
+            exit 0
+          }
+          $sig = Get-AuthenticodeSignature out/TarnishedTool.exe
+          Write-Host "Signature: $($sig.Status)"
+          if ($sig.Status -ne "Valid") { throw "signing was asked for and the file came back $($sig.Status)" }
+          Write-Host "Signed by: $($sig.SignerCertificate.Subject)"
+          if (-not $sig.TimeStamperCertificate) {
+            throw "no timestamp: every signature made with this key goes invalid the day it expires"
+          }
+
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.name.outputs.artifact }}
-          path: TarnishedTool/bin/Release/TarnishedTool.exe
+          path: out/TarnishedTool.exe
           if-no-files-found: error
           retention-days: 30
 
