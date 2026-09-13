@@ -134,8 +134,13 @@ public class ControlViewModel : BaseViewModel
         _deaths = new DeathWatcher(tick, playerService, IsReady);
         _deaths.Died += () =>
         {
+            // Told, which is not the same as counted: whether a run counts
+            // it depends on whether that run takes asks at all, and on
+            // whoever is at the table. The run says which in a note of its
+            // own, a line or two after this one. Saying "said" here and
+            // nothing else read as success and was not.
             _client.Send(Frames.Event("died", null));
-            Say("Said: died");
+            Say("Told the run you died.");
         };
 
         _address = SettingsManager.Default.ControlAddress;
