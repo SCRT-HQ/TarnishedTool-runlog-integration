@@ -73,6 +73,7 @@ public sealed class GameOperations
             DataLoader.GetItems("CraftingMaterials", "Crafting Materials"),
             DataLoader.GetItems("CrystalTears", "Crystal Tears"),
             DataLoader.GetItems("Talismans", "Talismans"),
+            DataLoader.GetItems("Armor", "Armor"),
             DataLoader.GetItems("Arrows", "Arrows"),
             DataLoader.GetItems("PotsAndPerfumes", "Pots and Perfumes"),
             DataLoader.GetItems("Sorceries", "Sorceries"),
@@ -108,6 +109,9 @@ public sealed class GameOperations
     /// "as far as it goes", so it is held to the top of its own scale.
     /// </summary>
     private static int Ceiling(Weapon weapon) => weapon.UpgradeType == 1 ? 10 : 25;
+
+    /// <summary>Every ash of war, by name, for the weapons that take one.</summary>
+    private readonly Lazy<List<AshOfWar>> _ashes = new(() => DataLoader.GetAshOfWars());
 
     private sealed class Toggle
     {
@@ -390,7 +394,47 @@ public sealed class GameOperations
             var asked = args.Whole("upgrade") ?? 0;
             if (asked < 0) throw new OperationRefused("weapon.named takes a level of 0 or more");
             var level = Math.Min(asked, Ceiling(found));
-            _itemService.SpawnItem(found.Id + level, 1, -1, false, 1);
+
+            // An ash of war, where the weapon takes one. A somber weapon
+            // does not, and neither does a staff or a seal, so this is
+            // refused by name rather than quietly ignored: somebody
+            // asking for Bloody Slash on a weapon that cannot hold it
+            // wants to know, not to be handed a bare weapon.
+            var ashName = (args.Text("ash") ?? string.Empty).Trim();
+            var aowId = -1;
+            var offset = 0;
+            if (ashName.Length > 0)
+            {
+                if (!found.CanApplyAow) throw new OperationRefused(found.Name + " takes no ash of war");
+                var ash = _ashes.Value.FirstOrDefault(a => string.Equals(a.Name, ashName, StringComparison.OrdinalIgnoreCase));
+                if (ash == null) throw new OperationRefused("no ash of war is called " + ashName);
+                if (!ash.SupportsWeaponType(found.WeaponType)) throw new OperationRefused(ash.Name + " does not go on a " + found.Name);
+                aowId = ash.Id;
+
+                // The affinity is part of the weapon's id rather than the
+                // ash's, and an ash allows only some of them. Asked for,
+                // it is held to that list; unasked, it is the ordinary one
+                // where the ash allows it and the ash's own first choice
+                // where it does not, since every ash allows something.
+                var affinity = (args.Text("affinity") ?? string.Empty).Trim();
+                Affinity picked;
+                if (affinity.Length > 0)
+                {
+                    if (!Enum.TryParse(affinity.Replace(" ", string.Empty), true, out picked))
+                        throw new OperationRefused("no affinity is called " + affinity);
+                    if (!ash.SupportsAffinity(picked)) throw new OperationRefused(ash.Name + " cannot be " + affinity);
+                }
+                else
+                {
+                    picked = ash.SupportsAffinity(Affinity.Standard) ? Affinity.Standard : ash.GetAvailableAffinities().First();
+                }
+                offset = picked.GetIdOffset();
+            }
+
+            // A weapon does not stack, so two of them is two of them.
+            var count = args.Whole("count") ?? 1;
+            if (count < 1 || count > 8) throw new OperationRefused("weapon.named takes 1 to 8");
+            for (var i = 0; i < count; i++) _itemService.SpawnItem(found.Id + level + offset, 1, aowId, false, 1);
         });
 
         /**
