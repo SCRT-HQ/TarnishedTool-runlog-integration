@@ -189,10 +189,9 @@ The controller this tab was written against, and the one that is known to work. 
 
 Setting it up, once:
 
-1. Open the run, then **Settings → Stream → Chat**, and make a **watch key**. It is shown once. That key is what lets a tool read the run; the separate press key is for chat and is not used here.
-2. Under **Settings → Stream → Control**, copy the address and put your watch key where it says `REPLACE-WITH-YOUR-WATCH-KEY`. It looks like `wss://runlog.scrthq.com/ws?k=…&as=control`.
-3. Paste that into **Address** on the Control tab, and press **Connect**. The status goes to Connected and the log says so.
-4. Tick the operations the profile needs, under **What a source may do here**. Switching things on and off is toggles and numbers, which are on already; anything that moves you, hands you an item or presses a button is off until you say otherwise.
+1. Open the run, then **Settings → Stream → Control**, and press **Make a watch key**. The address finishes itself with the key in it: `wss://runlog.scrthq.com/ws?k=…&as=control`. Copy it. The key is shown this once, so if you lose the address, make another key and the old one stops working.
+2. Paste it into **Address** on the Control tab and press **Connect**. The status goes to Connected and the log says so.
+3. Tick the operations the profile needs, under **What a source may do here**. Switching things on and off is toggles and numbers, which are on already; anything that moves you, hands you an item or presses a button is off until you say otherwise.
 
 Then, per run:
 
