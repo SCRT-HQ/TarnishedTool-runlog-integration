@@ -190,7 +190,6 @@ public sealed class GameOperations
         Number("player.speed", () => player.PlayerSpeed, v => player.PlayerSpeed = v, 0.1f, 10f);
         Number("game.speed", () => utility.GameSpeed, v => utility.GameSpeed = v, 0.1f, 10f);
         Number("game.fps", () => utility.Fps, v => utility.Fps = (int)v, 20f, 240f);
-        Number("player.runes", () => player.Runes, v => player.Runes = (int)v, 0f, 999999999f);
         Number("player.newGame", () => player.NewGame, v => player.NewGame = (int)v, 0f, 7f);
         Number("player.vigor", () => player.Vigor, v => player.Vigor = (int)v, 1f, 99f);
         Number("player.mind", () => player.Mind, v => player.Mind = (int)v, 1f, 99f);
@@ -465,6 +464,28 @@ public sealed class GameOperations
             // happened in between alone.
             var moved = now - was;
             return new[] { RevertStep.Of("value.add", "name", name, "by", -moved) };
+        });
+
+        /**
+         * Runes, given.
+         *
+         * Not a number this can read. `player.Runes` is the box on the
+         * Player tab holding how many a person is about to give
+         * themselves, and a button does the giving; wiring value.add to
+         * it moved the number in the box and nothing else, which is
+         * exactly as useful as it sounds. Nothing in the game exposes how
+         * many runes somebody is carrying, so this adds and cannot set,
+         * and it does not come back off: runes given are spent by the
+         * time anything would take them away, and taking away what they
+         * earned instead is worse than letting a gift stand.
+         */
+        registry.RegisterOneShot("runes.give", args =>
+        {
+            var amount = args.Whole("amount");
+            if (amount == null) throw new OperationRefused("runes.give wants an amount");
+            if (amount == 0) return;
+            if (Math.Abs(amount.Value) > 999999999) throw new OperationRefused("runes.give takes up to 999999999");
+            _player.GiveRunes(amount.Value);
         });
 
         registry.RegisterOneShot("item.give", args =>
