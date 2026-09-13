@@ -18,7 +18,7 @@ namespace TarnishedTool.Control;
 /// </summary>
 public sealed class Consent
 {
-    private static readonly string[] OffUnlessAsked = { "warp.position", "item.give", "action.invoke" };
+    private static readonly string[] OffUnlessAsked = { "warp.position", "warp.grace", "player.drop", "item.give", "action.invoke" };
 
     private readonly HashSet<string> _allowed = new(StringComparer.Ordinal);
 

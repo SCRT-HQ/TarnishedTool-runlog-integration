@@ -239,9 +239,19 @@ the same list with what is switched on. As of this build:
 | `speffect.apply` | `id` | A special effect by the game's own id. Taken off on revert. |
 | `speffect.remove` | `id` | One way. |
 | `warp.position` | `block`, `x`, `y`, `z`, `angle` | One way, and off by default. |
+| `warp.grace` | `name`, `area` | Somewhere by name, from the tool's own list of every grace, including ones the player has never found. One way, off by default. |
+| `player.drop` | `height` | Straight up from wherever they are, then gravity. Needs no map. One way, off by default. |
 | `item.give` | `id`, `quantity`, `ashOfWar` | One way, and off by default. |
 | `action.invoke` | `action` | Fifteen of the tool's own buttons. Off by default. |
 
 The names for `flag.set` and `value.set` are listed in
 `TarnishedTool/Control/GameOperations.cs`, which is the one file in the
-control layer that knows what game this is.
+control layer that knows what game this is. The names `warp.grace` takes
+are the game's own, as the tool's grace list spells them; the Travel tab
+shows the same list.
+
+Two of these exist because a controller cannot know where a player is
+standing. A source that wants somebody moved cannot say "the nearest
+cave" and cannot honestly ship coordinates either, since those belong to
+one machine and one patch. It can name a place, which stays true, or it
+can ask for straight up, which needs nothing at all.

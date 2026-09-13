@@ -35,6 +35,16 @@ public sealed class GameOperations
     private readonly ITravelService _travel;
     private readonly IItemService _items;
     private readonly HotkeyManager _hotkeys;
+    /// <summary>
+    /// Every grace the tool knows, by area and by name.
+    ///
+    /// This is why a source can name a destination without knowing a
+    /// single coordinate. The tool already ships these and already
+    /// updates them when the game patches; a run that says "Church of
+    /// Elleh" is saying something that stays true, where three numbers
+    /// would not.
+    /// </summary>
+    private readonly Lazy<List<Grace>> _graces = new(() => DataLoader.GetGraces().SelectMany(a => a.Value).ToList());
 
     private sealed class Toggle
     {
@@ -220,6 +230,42 @@ public sealed class GameOperations
                 throw new OperationRefused("warp.position wants a block and x, y, z");
             var angle = args.Real("angle") ?? 0f;
             _travel.WarpToBlockId(new Position(block.Value, new Vector3(x.Value, y.Value, z.Value), angle));
+        });
+
+        /**
+         * Somewhere by name, which is the only kind of somewhere a source
+         * can honestly ask for.
+         */
+        registry.RegisterOneShot("warp.grace", args =>
+        {
+            var name = (args.Text("name") ?? string.Empty).Trim();
+            if (name.Length == 0) throw new OperationRefused("warp.grace wants a name");
+            var area = (args.Text("area") ?? string.Empty).Trim();
+            var found = _graces.Value
+                .Where(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase))
+                .Where(g => area.Length == 0 || string.Equals(g.MainArea, area, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (found.Count == 0) throw new OperationRefused("no grace called " + name + (area.Length > 0 ? " in " + area : string.Empty));
+            // Several places share a name. Guessing which one would move
+            // somebody to the wrong side of the map, so it asks instead.
+            if (found.Count > 1) throw new OperationRefused(name + " names " + found.Count + " graces; say which area");
+            _travel.Warp(found[0]);
+        });
+
+        /**
+         * Straight up, and then gravity.
+         *
+         * The one destination that needs no map at all: wherever the
+         * player is, a few hundred feet above it. What happens next is
+         * the game's business and is usually fatal, which is the point.
+         */
+        registry.RegisterOneShot("player.drop", args =>
+        {
+            var height = args.Real("height") ?? 150f;
+            if (height < 5f || height > 500f) throw new OperationRefused("player.drop takes 5 to 500");
+            var at = _player.GetPlayerPos();
+            if (at == Vector3.Zero) throw new OperationRefused("there is no player to lift");
+            _player.SetPlayerPos(new Vector3(at.X, at.Y + height, at.Z));
         });
 
         registry.RegisterOneShot("item.give", args =>
