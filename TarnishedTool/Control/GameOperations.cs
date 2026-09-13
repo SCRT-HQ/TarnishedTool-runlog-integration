@@ -204,7 +204,35 @@ public sealed class GameOperations
         Number("player.arcane", () => player.Arcane, v => player.Arcane = (int)v, 1f, 99f);
         Number("player.incomingDamage", () => player.IncomingDamageMultiplier, v => player.IncomingDamageMultiplier = v, 0f, 100f);
         Number("player.outgoingDamage", () => player.OutgoingDamageMultiplier, v => player.OutgoingDamageMultiplier = v, 0f, 100f);
+
+        /**
+         * Which spirit ash is in the slot, and nought for none.
+         *
+         * The one restriction on this list that a run could otherwise only
+         * ask for and hope: "no summons" was a vow, and a vow is a thing
+         * somebody remembers or does not. Read before it is written, like
+         * every other number here, so what a run borrows for a scene it
+         * gives back at the end of one.
+         *
+         * Spirit ashes only. A summon sign on the ground is another
+         * player, and nothing in this build reaches that.
+         */
+        Number("player.spiritAsh", () => _player.GetSpiritAsh(), v => _player.SetSpiritAsh((int)v), 0f, 255f);
+
+        // Weightless, which is funnier than it is cruel and occasionally
+        // both. Kept here rather than left out because a curse a tool can
+        // actually do is worth more than three a player has to remember.
+        Flag("player.noGravity", () => _noGravity, v => { _noGravity = v; _player.ToggleNoGravity(v); });
     }
+
+    /// <summary>
+    /// Whether gravity is off, kept here because the service only sets it.
+    ///
+    /// Every other toggle on this list is read from a view model that holds
+    /// it. This one has nowhere to read from, so the last thing written is
+    /// the answer, which is enough for a revert to put it back.
+    /// </summary>
+    private bool _noGravity;
 
     /// <summary>The names a source may switch, for the panel to list.</summary>
     public IEnumerable<string> FlagNames => _flags.Keys.OrderBy(n => n, StringComparer.Ordinal);
