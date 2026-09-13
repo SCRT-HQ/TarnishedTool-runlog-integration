@@ -59,6 +59,18 @@ public sealed class ApplyFrame
     /// unit closes. A source that works in seconds never sends one.
     /// </summary>
     public string Group { get; set; }
+    /// <summary>
+    /// Whether the operations stand or fall separately.
+    /// </summary>
+    /// <remarks>
+    /// Off, which is the default, they are one effect: a rule that makes
+    /// somebody slow and blind is one rule, and half of it is a different
+    /// rule nobody wrote. On, they are a list of things to do, and one the
+    /// build cannot do takes itself out and leaves the rest standing. A
+    /// run's terms are a list like that: eight gifts, and a name this
+    /// build has never heard of should not cost you the other seven.
+    /// </remarks>
+    public bool Each { get; set; }
     public List<OpCall> Ops { get; } = new();
 }
 
@@ -106,6 +118,7 @@ public static class Frames
                         Label = StringOf(root, "label"),
                         For = IntOf(root, "for"),
                         Group = StringOf(root, "group"),
+                        Each = BoolOf(root, "each"),
                     };
                     if (string.IsNullOrEmpty(frame.Id)) return new Incoming { Kind = "unreadable", Text = "an apply with no id" };
                     if (root.TryGetProperty("ops", out var ops) && ops.ValueKind == JsonValueKind.Array)
@@ -187,6 +200,10 @@ public static class Frames
         w.Close();
         return w.ToString();
     }
+
+    /// <summary>A flag off the wire, absent meaning false.</summary>
+    private static bool BoolOf(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.True;
 
     private static string StringOf(JsonElement e, string name) =>
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String

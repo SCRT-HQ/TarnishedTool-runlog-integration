@@ -36,6 +36,14 @@ static class Check
         var g = Frames.Read("{\"t\":\"apply\",\"id\":\"o4#0\",\"group\":\"unit:2\",\"ops\":[{\"op\":\"x\"}]}");
         Is("group", g.Apply.Group, "unit:2");
         Is("no group", Frames.Read("{\"t\":\"apply\",\"id\":\"a\",\"ops\":[{\"op\":\"x\"}]}").Apply.Group == null, true);
+        // A frame of separate things says so. Absent means one effect,
+        // which is what every rule sends and what the older builds that
+        // never heard of this will go on assuming.
+        var each = Frames.Read("{\"t\":\"apply\",\"id\":\"setup\",\"each\":true,\"ops\":[{\"op\":\"x\"}]}");
+        Is("each", each.Apply.Each, true);
+        Is("no each", Frames.Read("{\"t\":\"apply\",\"id\":\"a\",\"ops\":[{\"op\":\"x\"}]}").Apply.Each, false);
+        Is("each false", Frames.Read("{\"t\":\"apply\",\"id\":\"a\",\"each\":false,\"ops\":[{\"op\":\"x\"}]}").Apply.Each, false);
+
         var rg = Frames.Read("{\"t\":\"revert\",\"group\":\"unit:2\"}");
         Is("revert a group", rg.RevertGroup, "unit:2");
         Is("a group revert names no id", rg.RevertId == null, true);

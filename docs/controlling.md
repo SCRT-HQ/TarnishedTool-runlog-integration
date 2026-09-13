@@ -78,6 +78,7 @@ Send only the operations `ops` lists. Anything else is refused by name and nothi
 | `label` | What a person sees in the tool's log. |
 | `for` | Seconds. Leave it out and it holds until you say otherwise. |
 | `group` | Optional. Several effects can share one, and a `revert` naming the group takes all of them back together. |
+| `each` | Optional, and off unless said. Off, the operations are one effect: all of them land or none of them do, because a rule that makes somebody slow and blind is one rule and half of it is a different rule nobody wrote. On, they are a list of separate things, and one this build has no name for, or one switched off, or one that fails, takes itself out and leaves the rest standing. A run's terms are sent this way; a rule's operations are not. |
 | `ops` | One or more, applied in order, as one thing. If any fails, the ones that landed are taken back and the whole apply is refused. |
 
 ### applied

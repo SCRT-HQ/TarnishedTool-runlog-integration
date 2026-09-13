@@ -51,6 +51,8 @@ public sealed class EffectRunner
     private sealed class Waiting
     {
         public ApplyFrame Frame;
+        /// <summary>What was left of it once this build had its say; see Apply.</summary>
+        public List<OpCall> Doable;
         public DateTime Until;
     }
 
@@ -109,25 +111,42 @@ public sealed class EffectRunner
         // once here. A person watching this tab do nothing needs to know
         // why, and the answer travelling back over the socket is not
         // somewhere they can see.
+        // A frame that stands or falls together is checked together: one
+        // operation this build has no name for, or one switched off, and
+        // none of it happens. A frame of separate things loses only the
+        // one, because eight gifts should not be cancelled by a ninth
+        // written against a newer build than this.
+        var doable = new List<OpCall>();
         foreach (var call in frame.Ops)
         {
-            if (!_ops.Has(call.Op))
+            var no = !_ops.Has(call.Op) ? "this build has no " + call.Op
+                : !_consent.Allows(call.Op) ? call.Op + " is switched off here"
+                : null;
+            if (no == null)
             {
-                Refuse(frame, "this build has no " + call.Op);
+                doable.Add(call);
+                continue;
+            }
+
+            if (!frame.Each)
+            {
+                Refuse(frame, no);
                 return;
             }
 
-            if (!_consent.Allows(call.Op))
-            {
-                Refuse(frame, call.Op + " is switched off here");
-                return;
-            }
+            Log("Left out of " + Name(frame) + ": " + no);
+        }
+
+        if (doable.Count == 0)
+        {
+            Refuse(frame, frame.Ops.Count == 0 ? "there is nothing in it" : "nothing in it can be done here");
+            return;
         }
 
         // A warp refuses rather than waits. Arriving somewhere unexpected
         // four minutes after the dice said so is worse than not arriving,
         // and it is the operation that can strand somebody.
-        var impatient = frame.Ops.Any(o => o.Op.StartsWith("warp.", StringComparison.Ordinal));
+        var impatient = doable.Any(o => o.Op.StartsWith("warp.", StringComparison.Ordinal));
 
         if (!_isReady())
         {
@@ -137,16 +156,16 @@ public sealed class EffectRunner
                 return;
             }
 
-            _waiting.Add(new Waiting { Frame = frame, Until = DateTime.UtcNow + Patience });
+            _waiting.Add(new Waiting { Frame = frame, Doable = doable, Until = DateTime.UtcNow + Patience });
             Log("Waiting for the game: " + Name(frame));
             Changed?.Invoke();
             return;
         }
 
-        Run(frame);
+        Run(frame, doable);
     }
 
-    private void Run(ApplyFrame frame)
+    private void Run(ApplyFrame frame, List<OpCall> doable)
     {
         // Already applied under this id: the source re-sent, or a
         // reconnection replayed it. Taking the first one off before
@@ -161,7 +180,8 @@ public sealed class EffectRunner
             Group = frame.Group,
         };
 
-        foreach (var call in frame.Ops)
+        var lost = 0;
+        foreach (var call in doable)
         {
             try
             {
@@ -169,17 +189,34 @@ public sealed class EffectRunner
             }
             catch (Exception ex)
             {
+                var why = ex is OperationRefused ? ex.Message : call.Op + " failed: " + ex.Message;
+
                 // Half an effect is not an effect. What landed comes back
                 // off before anyone is told it failed.
-                Undo(effect);
-                Refuse(frame, ex is OperationRefused ? ex.Message : call.Op + " failed: " + ex.Message);
-                return;
+                if (!frame.Each)
+                {
+                    Undo(effect);
+                    Refuse(frame, why);
+                    return;
+                }
+
+                // A list of separate things loses the one that failed and
+                // goes on. Said out loud, because a gift that quietly did
+                // not arrive is worse than one that says why.
+                lost++;
+                Log("Left out of " + Name(frame) + ": " + why);
             }
+        }
+
+        if (effect.Reverts.Count == 0 && lost > 0)
+        {
+            Refuse(frame, "none of it could be done");
+            return;
         }
 
         _live.Add(effect);
         Save();
-        Log("Applied " + effect.Label + (effect.Until.HasValue ? " for " + frame.For + "s" : string.Empty));
+        Log("Applied " + effect.Label + (lost > 0 ? " without " + lost + " of it" : string.Empty) + (effect.Until.HasValue ? " for " + frame.For + "s" : string.Empty));
         Answer(effect.Id, true, effect.Until, null);
         Changed?.Invoke();
     }
@@ -320,7 +357,7 @@ public sealed class EffectRunner
 
         var ready = _waiting.ToList();
         _waiting.Clear();
-        foreach (var w in ready) Run(w.Frame);
+        foreach (var w in ready) Run(w.Frame, w.Doable);
         Changed?.Invoke();
     }
 
