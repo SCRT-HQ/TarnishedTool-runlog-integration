@@ -73,6 +73,30 @@ public sealed class GameOperations
         .SelectMany(x => x)
         .ToList());
 
+    /// <summary>
+    /// The weapons, which are not items in the sense above.
+    ///
+    /// An item is a thing with a name and a count. A weapon is a thing
+    /// with a name and a state: its id is the base id plus how far it
+    /// has been reinforced, so "Wing of Astel" and "Wing of Astel +10"
+    /// are two different numbers and only the second is what somebody
+    /// asking for a maxed weapon means. Kept apart from `_items` for
+    /// that reason, and given an operation of its own that can be told
+    /// the level.
+    /// </summary>
+    private readonly Lazy<List<Weapon>> _weapons = new(() => DataLoader.GetWeapons());
+
+    /// <summary>
+    /// How far a weapon of this kind goes.
+    ///
+    /// Two scales, and the game's own data says which one a weapon is
+    /// on: the ordinary ones take smithing stones to +25, and the ones
+    /// that take somber stones stop at +10. Asking for +25 on a somber
+    /// weapon is not an error worth refusing, it is somebody meaning
+    /// "as far as it goes", so it is held to the top of its own scale.
+    /// </summary>
+    private static int Ceiling(Weapon weapon) => weapon.UpgradeType == 1 ? 10 : 25;
+
     private sealed class Toggle
     {
         public Func<bool> Read;
@@ -310,6 +334,29 @@ public sealed class GameOperations
             // Several things share a name in this game, and they are
             // usually the same thing; the first will do.
             _itemService.SpawnItem(found[0].Id, Math.Min(quantity, Math.Max(1, found[0].MaxStorage)), -1, true, Math.Max(1, found[0].MaxStorage));
+        });
+
+        /**
+         * A weapon, by name, at a level.
+         *
+         * The one thing a run could not ask for: every other gift is a
+         * count of something, and a weapon is a thing with a state. The
+         * level is the weapon's own, so +10 on a somber weapon is the
+         * top of it and +25 on an ordinary one is the top of that; a
+         * level past either is held there rather than refused, because
+         * somebody typing 25 at a somber weapon means the same thing
+         * either way. Omitted, it is the weapon as found.
+         */
+        registry.RegisterOneShot("weapon.named", args =>
+        {
+            var name = (args.Text("name") ?? string.Empty).Trim();
+            if (name.Length == 0) throw new OperationRefused("weapon.named wants a name");
+            var found = _weapons.Value.FirstOrDefault(w => string.Equals(w.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (found == null) throw new OperationRefused("no weapon here is called " + name);
+            var asked = args.Whole("upgrade") ?? 0;
+            if (asked < 0) throw new OperationRefused("weapon.named takes a level of 0 or more");
+            var level = Math.Min(asked, Ceiling(found));
+            _itemService.SpawnItem(found.Id + level, 1, -1, false, 1);
         });
 
         /**

@@ -240,6 +240,7 @@ The authoritative list is the `ops` in `hello`, and the Control tab shows the sa
 | `player.drop` | `height` | Straight up from wherever they are, then gravity. Needs no map. One way, off by default. |
 | `item.give` | `id`, `quantity`, `ashOfWar` | By the game's own id. One way, off by default. |
 | `item.named` | `name`, `quantity` | By name, from the tool's own lists: consumables, materials, tears, talismans, arrows, spells, and the key items that are simply given. One way, off by default. |
+| `weapon.named` | `name`, `upgrade` | A weapon, at a level. A weapon is not an item with a count: its id carries how far it has been reinforced, so the level is part of naming it. Ordinary weapons reinforce to +25 and somber ones to +10, and a level past a weapon's own ceiling is held there rather than refused. Omit it for the weapon as found. One way, off by default. |
 | `value.add` | `name`, `by` | Moves a number rather than setting it. Reverts to what it was, not to what it became. |
 | `action.invoke` | `action` | Fifteen of the tool's own buttons. Off by default. |
 
