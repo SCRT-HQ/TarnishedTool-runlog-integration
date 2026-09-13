@@ -5,3 +5,5 @@ riderModule.iml
 /_ReSharper.Caches/
 FodyWeavers.xsd
 
+tests/bin/
+tests/obj/

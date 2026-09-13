@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The protocol, checked without a game or a window.
+
+    Protocol.cs and Operations.cs are the two files in the control layer
+    that know nothing about Elden Ring and nothing about WPF, which is
+    what makes them checkable at all. They are linked in rather than
+    referenced, so this needs nothing built and nothing running: it is
+    the only part of the tool that can be tested on a machine with no
+    copy of the game on it.
+
+    Deliberately not in TarnishedTool.sln. That solution belongs to
+    upstream and this builds on its own.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <AssemblyName>ProtocolChecks</AssemblyName>
+    <RootNamespace>TarnishedTool.Checks</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>CS8632</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ProtocolChecks.cs" />
+    <Compile Include="..\TarnishedTool\Control\Protocol.cs" Link="Protocol.cs" />
+    <Compile Include="..\TarnishedTool\Control\Operations.cs" Link="Operations.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="10.0.1" />
+  </ItemGroup>
+
+</Project>

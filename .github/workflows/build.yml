@@ -1,0 +1,128 @@
+# Build the tool, check the protocol, and cut a release when asked.
+#
+# The build runs on every push and pull request and produces the one file
+# anybody downloads. The release is a separate job that only runs when
+# somebody asks for it by hand, and it names an environment, so a reviewer
+# on that environment approves before a tag or a download appears. With no
+# reviewers configured on the environment there is no gate at all; see
+# .github/workflows/README.md.
+name: Build
+
+on:
+  push:
+    branches: [integration, master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Cut a release from this build
+        type: boolean
+        default: false
+      tag:
+        description: "Tag for the release, e.g. v1.2.1-control.1"
+        type: string
+      notes:
+        description: What changed, in a line or two
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: microsoft/setup-msbuild@v3
+      - uses: NuGet/setup-nuget@v4
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      # packages.config rather than PackageReference, so restoring is
+      # nuget's job and not msbuild's.
+      - name: Restore
+        run: nuget restore TarnishedTool.sln
+
+      - name: Build
+        run: msbuild TarnishedTool.sln -t:build -p:Configuration=Release -m -v:minimal
+
+      # The only part of the tool that can be checked on a machine with no
+      # copy of the game: the wire format, and the registry that reads it.
+      - name: Check the protocol
+        run: dotnet run --project tests/ProtocolChecks.csproj -c Release
+
+      # Costura packs every dependency into the executable. If that ever
+      # stops happening the download quietly becomes one that does not run
+      # on anybody else's machine, and the size is what says so.
+      - name: One file, and a plausible one
+        shell: pwsh
+        run: |
+          $exe = "TarnishedTool/bin/Release/TarnishedTool.exe"
+          if (-not (Test-Path $exe)) { throw "no executable was produced" }
+          $mb = [math]::Round((Get-Item $exe).Length / 1MB, 2)
+          Write-Host "TarnishedTool.exe is $mb MB"
+          if ($mb -lt 4) { throw "$mb MB is too small: the dependencies are probably not packed in" }
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: TarnishedTool
+          path: TarnishedTool/bin/Release/TarnishedTool.exe
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Release
+    needs: build
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.release }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The gate. A reviewer on this environment approves before anything is
+    # tagged or published.
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      # Everything somebody typed into the dispatch form reaches these
+      # steps as an environment variable rather than being pasted into the
+      # script. An expression is substituted before the shell sees the
+      # line, so a tag or a note could otherwise carry anything it liked.
+      - name: A tag is required
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if [ -z "$TAG" ]; then
+            echo "Give a tag when asking for a release, such as v1.2.1-control.1." >&2
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: TarnishedTool
+          path: out
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          NOTES: ${{ inputs.notes }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref_name }}
+        run: |
+          printf '%s\n\n' "$NOTES" > notes.md
+          {
+            printf 'Built from `%s` on `%s`.\n\n' "$SHA" "$REF"
+            printf 'A fork of [borgCode/TarnishedTool](https://github.com/borgCode/TarnishedTool) with a Control tab added. Everything upstream says about offline use applies here: the game goes offline, or you get banned.\n\n'
+            printf 'Driving it from something of your own: [docs/controlling.md](https://github.com/%s/blob/%s/docs/controlling.md).\n' "$REPO" "$SHA"
+          } >> notes.md
+          gh release create "$TAG" out/TarnishedTool.exe \
+            --repo "$REPO" \
+            --target "$SHA" \
+            --title "$TAG" \
+            --notes-file notes.md
