@@ -4,7 +4,7 @@ The Control tab holds a WebSocket address and dials it. What is on the other end
 
 This is what the other end has to do.
 
-**This is for offline use only. Everything here edits the memory of a running game, which violates the Terms of Service and will most likely lead to a ban if you do it online.** The game goes offline; the machine it runs on does not have to, and a controller reaching it over a socket is not what gets anybody banned.
+Offline only, as the [readme](../README.md) says. Worth one line here because this document is about connecting to a network and could be read the wrong way round: it is the game that goes offline, not the machine, and a controller reaching this tool over a socket is not the part that gets anybody banned.
 
 ## The transport
 
