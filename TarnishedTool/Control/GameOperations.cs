@@ -452,9 +452,19 @@ public sealed class GameOperations
             var was = number.Read();
             var now = Math.Max(number.Least, Math.Min(number.Most, was + by.Value));
             number.Write(now);
-            // Put back what it was, not what it became, in case the
-            // player earned some of the difference themselves.
-            return new[] { RevertStep.Of("value.set", "name", name, "value", was) };
+
+            // Take back what was added, not the number it was added to.
+            //
+            // Setting it back to what it was is what this did, under a
+            // comment saying it was so a player kept what they earned
+            // themselves, which is the one thing it could not do: earn
+            // thirty thousand runes while a toll of ten is in force and
+            // the revert puts you back to before both. Subtracting the
+            // amount actually applied, which is not the amount asked for
+            // where a floor or a ceiling got in the way, leaves whatever
+            // happened in between alone.
+            var moved = now - was;
+            return new[] { RevertStep.Of("value.add", "name", name, "by", -moved) };
         });
 
         registry.RegisterOneShot("item.give", args =>
