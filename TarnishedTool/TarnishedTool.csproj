@@ -110,6 +110,7 @@
             <SubType>Designer</SubType>
         </ApplicationDefinition>
         <Compile Include="Behaviors\TextBoxBehavior.cs" />
+        <Compile Include="Control\Chatter.cs" />
         <Compile Include="Control\Consent.cs" />
         <Compile Include="Control\ControlClient.cs" />
         <Compile Include="Control\EffectRunner.cs" />

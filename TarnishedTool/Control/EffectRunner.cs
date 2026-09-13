@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Windows.Threading;
 
 namespace TarnishedTool.Control;
@@ -72,7 +73,7 @@ public sealed class EffectRunner
 
     public int WaitingCount => _waiting.Count;
 
-    public event Action<string> Logged;
+    public event Action<string, Chatter> Logged;
     /// <summary>id, whether it landed, when it comes off, and why not.</summary>
     public event Action<string, bool, DateTime?, string> Answered;
     public event Action Changed;
@@ -95,7 +96,7 @@ public sealed class EffectRunner
                 }
                 catch (Exception ex)
                 {
-                    Log("Could not put back " + step.Op + ": " + ex.Message);
+                    Trouble("Could not put back " + step.Op + ": " + ex.Message);
                 }
             }
 
@@ -134,7 +135,7 @@ public sealed class EffectRunner
                 return;
             }
 
-            Log("Left out of " + Name(frame) + ": " + no);
+            Trouble("Left out of " + Name(frame) + ": " + no);
         }
 
         if (doable.Count == 0)
@@ -185,6 +186,7 @@ public sealed class EffectRunner
         {
             try
             {
+                Detail("  " + call.Op + " " + Describe(call.Args));
                 effect.Reverts.AddRange(_ops.Invoke(call.Op, new Args(call.Args)));
             }
             catch (Exception ex)
@@ -204,7 +206,7 @@ public sealed class EffectRunner
                 // goes on. Said out loud, because a gift that quietly did
                 // not arrive is worse than one that says why.
                 lost++;
-                Log("Left out of " + Name(frame) + ": " + why);
+                Trouble("Left out of " + Name(frame) + ": " + why);
             }
         }
 
@@ -316,7 +318,7 @@ public sealed class EffectRunner
             }
             catch (Exception ex)
             {
-                Log("Could not take back " + step.Op + ": " + ex.Message);
+                Trouble("Could not take back " + step.Op + ": " + ex.Message);
             }
         }
     }
@@ -345,7 +347,7 @@ public sealed class EffectRunner
         foreach (var w in stale)
         {
             _waiting.Remove(w);
-            Log("Gave up waiting for the game: " + Name(w.Frame));
+            Trouble("Gave up waiting for the game: " + Name(w.Frame));
             Answer(w.Frame.Id, false, null, "the game was not ready in time");
         }
 
@@ -372,13 +374,27 @@ public sealed class EffectRunner
     /// <summary>Told to whoever asked, and to whoever is watching this tab.</summary>
     private void Refuse(ApplyFrame frame, string why)
     {
-        Log("Refused " + Name(frame) + ": " + why);
+        Trouble("Refused " + Name(frame) + ": " + why);
         Answer(frame.Id, false, null, why);
     }
 
     private static string Name(ApplyFrame frame) => string.IsNullOrEmpty(frame.Label) ? frame.Id : frame.Label;
 
-    private void Log(string line) => Logged?.Invoke(line);
+    /// <summary>An operation's arguments, for reading rather than parsing.</summary>
+    private static string Describe(JsonElement args)
+    {
+        if (args.ValueKind != JsonValueKind.Object) return "(nothing)";
+        var parts = args.EnumerateObject().Select(a => a.Name + "=" + a.Value.ToString()).ToList();
+        return parts.Count == 0 ? "(nothing)" : string.Join(", ", parts);
+    }
+
+    private void Log(string line) => Logged?.Invoke(line, Chatter.Normal);
+
+    /// <summary>A line only somebody setting a profile up wants to read.</summary>
+    private void Detail(string line) => Logged?.Invoke(line, Chatter.Everything);
+
+    /// <summary>A line worth reading however little anybody asked for.</summary>
+    private void Trouble(string line) => Logged?.Invoke(line, Chatter.Quiet);
 
     private void Answer(string id, bool ok, DateTime? until, string error) => Answered?.Invoke(id, ok, until, error);
 }

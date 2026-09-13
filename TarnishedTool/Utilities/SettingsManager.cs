@@ -137,6 +137,8 @@ public class SettingsManager
     public bool ControlConnectOnStart { get; set; }
     public string ControlAllowedOperations { get; set; } = "";
     public bool ControlTellsOfDeath { get; set; }
+    /// <summary>How much the Control tab's log says: 0 trouble only, 1 the usual, 2 every operation.</summary>
+    public int ControlChatter { get; set; } = 1;
 
 
     private static string SettingsPath => Path.Combine(

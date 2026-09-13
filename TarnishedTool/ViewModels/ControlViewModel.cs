@@ -140,6 +140,23 @@ public class ControlViewModel : BaseViewModel
 
         _address = SettingsManager.Default.ControlAddress;
         _tellsOfDeath = SettingsManager.Default.ControlTellsOfDeath;
+
+        // Which build this is, said once, in the pane somebody is already
+        // reading when they are wondering why a new operation is not
+        // there. A build that cannot be copied over the running one
+        // leaves the old file in place and says so only in the build
+        // output, which is not where anybody is looking by then.
+        try
+        {
+            var exe = System.Reflection.Assembly.GetEntryAssembly()?.Location;
+            if (!string.IsNullOrEmpty(exe) && System.IO.File.Exists(exe))
+                Say("Tarnished Tool, built " + System.IO.File.GetLastWriteTime(exe).ToString("yyyy-MM-dd HH:mm"), Chatter.Quiet);
+        }
+        catch
+        {
+            // Not knowing which build this is costs nothing but the line.
+        }
+        _chatter = (Chatter)Math.Max(0, Math.Min(2, SettingsManager.Default.ControlChatter));
         if (_tellsOfDeath) _deaths.Start();
         _seat = SettingsManager.Default.ControlSeat;
         _connectOnStart = SettingsManager.Default.ControlConnectOnStart;
@@ -220,6 +237,23 @@ public class ControlViewModel : BaseViewModel
     /// Say so on the socket when the player dies. Off until somebody says
     /// otherwise, and nothing at all while nothing is connected.
     /// </summary>
+    private Chatter _chatter = Chatter.Normal;
+
+    /// <summary>How much the pane below says. Kept between sessions.</summary>
+    public Chatter Chatter
+    {
+        get => _chatter;
+        set
+        {
+            if (!SetProperty(ref _chatter, value)) return;
+            SettingsManager.Default.ControlChatter = (int)value;
+            SettingsManager.Default.Save();
+        }
+    }
+
+    /// <summary>The three of them, for the menu.</summary>
+    public Array Chatters { get; } = Enum.GetValues(typeof(Chatter));
+
     public bool TellsOfDeath
     {
         get => _tellsOfDeath;
@@ -338,9 +372,20 @@ public class ControlViewModel : BaseViewModel
     /// </summary>
     private bool IsReady() => _memory.IsAttached && _isLoaded && _state.IsLoaded();
 
-    private void Say(string line)
+    private void Say(string line) => Say(line, Chatter.Normal);
+
+    /// <summary>
+    /// A line for the pane, kept or dropped on how much was asked for.
+    ///
+    /// The pane holds forty lines. What went wrong is always worth one of
+    /// them; what landed is worth one while playing; the operations
+    /// themselves are worth it only while somebody is working out why a
+    /// profile does not do what they wrote.
+    /// </summary>
+    private void Say(string line, Chatter level)
     {
-        if (string.IsNullOrWhiteSpace(line)) return;
+        // Quiet is nought, so trouble is never filtered out.
+        if (string.IsNullOrWhiteSpace(line) || level > _chatter) return;
         Log.Insert(0, DateTime.Now.ToString("HH:mm:ss") + "  " + line);
         while (Log.Count > 40) Log.RemoveAt(Log.Count - 1);
     }

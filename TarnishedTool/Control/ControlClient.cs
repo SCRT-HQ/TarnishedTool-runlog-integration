@@ -41,7 +41,7 @@ public sealed class ControlClient
 
     public event Action<string> StatusChanged;
     public event Action<Incoming> Received;
-    public event Action<string> Logged;
+    public event Action<string, Chatter> Logged;
 
     public bool IsRunning => _loop != null && !_loop.IsCompleted;
 
@@ -172,7 +172,7 @@ public sealed class ControlClient
         OnUi(() => StatusChanged?.Invoke(status));
     }
 
-    private void Log(string line) => OnUi(() => Logged?.Invoke(line));
+    private void Log(string line) => OnUi(() => Logged?.Invoke(line, Chatter.Quiet));
 
     private void Raise(Incoming incoming) => OnUi(() => Received?.Invoke(incoming));
 

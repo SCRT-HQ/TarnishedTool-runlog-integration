@@ -99,7 +99,20 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <TextBlock Grid.Row="5" Text="What happened" Margin="0,0,0,5" />
+        <DockPanel Grid.Row="5" Margin="0,0,0,5" LastChildFill="False">
+            <TextBlock Text="What happened" VerticalAlignment="Center" DockPanel.Dock="Left" />
+            <ComboBox DockPanel.Dock="Right"
+                      Width="110"
+                      VerticalAlignment="Center"
+                      ToolTip="How much this pane says. Trouble only, the usual, or every operation with its arguments while you are working out a profile."
+                      ItemsSource="{Binding Chatters}"
+                      SelectedItem="{Binding Chatter, Mode=TwoWay}" />
+            <TextBlock DockPanel.Dock="Right"
+                       Text="Say"
+                       VerticalAlignment="Center"
+                       Margin="0,0,6,0"
+                       Foreground="#999" />
+        </DockPanel>
 
         <ListBox Grid.Row="6"
                  ItemsSource="{Binding Log}"

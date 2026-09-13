@@ -112,6 +112,14 @@ Everything comes back off: when its time runs out, when its group is reverted, w
 
 You cannot read the game. There is no request for the player's health or position, and the only thing travelling the other way is what the tool volunteers, below.
 
+## Watching it work
+
+The pane at the foot of the tab says what happened, newest first, forty lines deep. How much it says is up to the box beside it.
+
+**Trouble** is what went wrong and nothing else: a refusal, a connection lost, an operation that could not be put back. **The usual** adds what landed and what came off, which is what you want while playing. **Everything** adds a line per operation as it runs, with its arguments, which is what you want while working out why a profile does something other than what you wrote: an operation that reports success and changes nothing looks exactly like one that worked until you can read what it was asked to do.
+
+The first line says which build this is, by the time its file was written. Worth a glance when an operation you just added is refused by name: a build that cannot be copied over a running copy of itself leaves the old one in place, and says so only in the build output.
+
 ## What the game tells you
 
 One frame, on the same socket, off by default:
