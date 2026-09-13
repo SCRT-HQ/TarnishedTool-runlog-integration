@@ -54,7 +54,12 @@ public sealed class EffectRunner
         public ApplyFrame Frame;
         /// <summary>What was left of it once this build had its say; see Apply.</summary>
         public List<OpCall> Doable;
-        public DateTime Until;
+        /// <summary>
+        /// When it stops being worth applying, or null where it never does.
+        /// Only an effect that lasts a set time has a moment that passes;
+        /// see Apply.
+        /// </summary>
+        public DateTime? Until;
     }
 
     public EffectRunner(OperationRegistry ops, Consent consent, RestoreLog log, Func<bool> isReady)
@@ -157,8 +162,21 @@ public sealed class EffectRunner
                 return;
             }
 
-            _waiting.Add(new Waiting { Frame = frame, Doable = doable, Until = DateTime.UtcNow + Patience });
-            Log("Waiting for the game: " + Name(frame));
+            // A deadline is for an effect whose moment passes. Something
+            // that lasts ninety seconds is worth nothing four minutes
+            // later, so it is given up on. Something with no lifetime is
+            // held until the source says otherwise -- a run's terms, a
+            // curse that lasts a unit -- and its moment does not pass
+            // while the source still means it to be in force.
+            //
+            // Waiting is the ordinary case here, not the exception: the
+            // usual way to start is to attach, then launch the game and
+            // load a save, which is minutes. Terms given a deadline were
+            // dropped every time, and applied only when the tool connected
+            // after a save was already in, which is backwards.
+            var until = frame.For.HasValue ? DateTime.UtcNow + Patience : (DateTime?)null;
+            _waiting.Add(new Waiting { Frame = frame, Doable = doable, Until = until });
+            Log(until.HasValue ? "Waiting for the game: " + Name(frame) : "Waiting for the game, for as long as it takes: " + Name(frame));
             Changed?.Invoke();
             return;
         }
@@ -366,7 +384,7 @@ public sealed class EffectRunner
 
         if (_waiting.Count == 0) return;
 
-        var stale = _waiting.Where(w => w.Until <= now).ToList();
+        var stale = _waiting.Where(w => w.Until.HasValue && w.Until.Value <= now).ToList();
         foreach (var w in stale)
         {
             _waiting.Remove(w);
