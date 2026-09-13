@@ -43,10 +43,12 @@
             </StackPanel>
 
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Player" VerticalAlignment="Center" />
-            <TextBox Grid.Row="1" Grid.Column="1"
-                     Text="{Binding Seat, UpdateSourceTrigger=PropertyChanged}"
-                     Margin="0,0,8,0"
-                     ToolTip="Which player this is, where more than one is being driven. Optional." />
+            <TextBlock Grid.Row="1" Grid.Column="1"
+                       Text="{Binding Seat}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,0"
+                       Foreground="{DynamicResource DimTextBrush}"
+                       ToolTip="Read from the address. Paste the line for the player you are, and this says who that is." />
             <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <CheckBox Content="Connect on start"
                           IsChecked="{Binding ConnectOnStart}"

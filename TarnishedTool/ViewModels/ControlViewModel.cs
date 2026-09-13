@@ -80,7 +80,6 @@ public class ControlViewModel : BaseViewModel
     private string _status = "Off";
     private string _address;
     private bool _tellsOfDeath;
-    private string _seat;
     private bool _connectOnStart;
     private int _liveCount;
 
@@ -175,7 +174,6 @@ public class ControlViewModel : BaseViewModel
         }
         _chatter = (Chatter)Math.Max(0, Math.Min(2, SettingsManager.Default.ControlChatter));
         if (_tellsOfDeath) _deaths.Start();
-        _seat = SettingsManager.Default.ControlSeat;
         _connectOnStart = SettingsManager.Default.ControlConnectOnStart;
 
         foreach (var name in _registry.Names) Operations.Add(new ConsentRow(_consent, name, _consent.Allows(name)));
@@ -246,6 +244,7 @@ public class ControlViewModel : BaseViewModel
         {
             if (!SetProperty(ref _address, value)) return;
             SettingsManager.Default.ControlAddress = value;
+            OnPropertyChanged(nameof(Seat));
             SettingsManager.Default.Save();
         }
     }
@@ -285,18 +284,36 @@ public class ControlViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Which player this is, where the far end is driving more than one.
-    /// Optional: a source with one player does not need it.
+    /// Which player this is, read out of the address rather than typed.
+    ///
+    /// It used to be a box of its own, and the box did nothing: the far
+    /// end takes the seat from `seat=` in the address, at the moment the
+    /// socket opens, and never reads the one in the hello. So a person
+    /// who typed a name here and pasted a line naming somebody else was
+    /// told they were one player while the run believed the other, with
+    /// nothing anywhere to say which had won.
+    ///
+    /// One address is all a person should need. This says what that
+    /// address claims, so it can be read back and checked, and there is
+    /// no second place for it to disagree with.
     /// </summary>
-    public string Seat
+    public string Seat => SeatIn(Address);
+
+    /// <summary>The `seat` in an address, or empty where it names none.</summary>
+    public static string SeatIn(string address)
     {
-        get => _seat;
-        set
+        if (string.IsNullOrWhiteSpace(address)) return string.Empty;
+        var q = address.IndexOf('?');
+        if (q < 0) return string.Empty;
+        foreach (var part in address.Substring(q + 1).Split('&'))
         {
-            if (!SetProperty(ref _seat, value)) return;
-            SettingsManager.Default.ControlSeat = value;
-            SettingsManager.Default.Save();
+            var eq = part.IndexOf('=');
+            if (eq <= 0) continue;
+            if (!string.Equals(part.Substring(0, eq), "seat", StringComparison.OrdinalIgnoreCase)) continue;
+            try { return Uri.UnescapeDataString(part.Substring(eq + 1)); }
+            catch { return part.Substring(eq + 1); }
         }
+        return string.Empty;
     }
 
     public bool ConnectOnStart
