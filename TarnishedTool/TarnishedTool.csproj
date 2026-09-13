@@ -115,7 +115,6 @@
         <Compile Include="Control\EffectRunner.cs" />
         <Compile Include="Control\GameOperations.cs" />
         <Compile Include="Control\Operations.cs" />
-        <Compile Include="Control\Presser.cs" />
         <Compile Include="Control\Protocol.cs" />
         <Compile Include="Control\RestoreLog.cs" />
         <Compile Include="Control\Watchers.cs" />

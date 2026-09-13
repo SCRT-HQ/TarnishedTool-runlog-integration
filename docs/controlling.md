@@ -24,6 +24,7 @@ tool  → hello    what I am, and every operation I can perform
       ← apply    do these things, under this id, for this long
 tool  → applied  whether it worked, and when it comes off
       ← revert   take that back
+tool  → event    something happened in the game
 ```
 
 Every message is one JSON object on its own frame. Anything a side does
@@ -121,14 +122,23 @@ volunteers, below.
 
 ## What the game tells you
 
-Optional, off by default, and separate: the **Tell it** address on the
-Control tab is a plain HTTP address the tool fetches when something
-happens in the game. Today it says one thing, that the player died, as a
-`GET` with `ask=died` on the end of whatever address was pasted in. It
-reads `say` out of a JSON answer and writes it in the log.
+One frame, on the same socket, off by default:
 
-It is a mention, not a command. Whatever is listening decides what to do
-about it, including nothing.
+```json
+{ "t": "event", "kind": "died" }
+```
+
+It is a mention, not a command. Whatever is listening decides what it
+means and whether to do anything, including nothing. Runlog turns it into
+an ask, which the table still has to accept; a script would probably just
+log it.
+
+A kind you do not know is ignored, so a later build saying more than
+`died` will not break an older controller.
+
+Switched on by **Say when I die** in the Control tab. There is no second
+address and no second key: if something is connected, it hears this, and
+if nothing is, nothing is sent.
 
 ## A controller in forty lines
 

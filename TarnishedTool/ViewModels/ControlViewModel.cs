@@ -74,12 +74,10 @@ public class ControlViewModel : BaseViewModel
     private readonly IStateService _state;
     private readonly DispatcherTimer _dropTimer;
     private readonly DeathWatcher _deaths;
-    private readonly Presser _presser;
 
     private bool _isLoaded;
     private string _status = "Off";
     private string _address;
-    private string _pressAddress;
     private bool _tellsOfDeath;
     private string _seat;
     private bool _connectOnStart;
@@ -130,16 +128,17 @@ public class ControlViewModel : BaseViewModel
         // borrowed and never gave back.
         _runner.RestoreFromLastTime();
 
-        // The other direction. A source may move this game because
-        // somebody here said it could; this end may only mention things,
-        // and only what is switched on below.
-        _presser = new Presser(() => PressAddress, () => Seat);
-        _presser.Logged += Say;
+        // The other direction, on the same socket. A source may move this
+        // game because somebody here said it could; this end may only
+        // mention what happened, and only what is switched on below.
         _deaths = new DeathWatcher(tick, playerService, IsReady);
-        _deaths.Died += () => _presser.Press("died");
+        _deaths.Died += () =>
+        {
+            _client.Send(Frames.Event("died", null));
+            Say("Said: died");
+        };
 
         _address = SettingsManager.Default.ControlAddress;
-        _pressAddress = SettingsManager.Default.ControlPressAddress;
         _tellsOfDeath = SettingsManager.Default.ControlTellsOfDeath;
         if (_tellsOfDeath) _deaths.Start();
         _seat = SettingsManager.Default.ControlSeat;
@@ -218,24 +217,9 @@ public class ControlViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Where to mention what happened in the game, with its own key in it.
-    ///
-    /// A different key from the one that listens, on purpose: what watches
-    /// must never also press, and the address that does the pressing is
-    /// the one worth keeping to yourself.
+    /// Say so on the socket when the player dies. Off until somebody says
+    /// otherwise, and nothing at all while nothing is connected.
     /// </summary>
-    public string PressAddress
-    {
-        get => _pressAddress;
-        set
-        {
-            if (!SetProperty(ref _pressAddress, value)) return;
-            SettingsManager.Default.ControlPressAddress = value;
-            SettingsManager.Default.Save();
-        }
-    }
-
-    /// <summary>Say so when the player dies. Off until somebody says otherwise.</summary>
     public bool TellsOfDeath
     {
         get => _tellsOfDeath;

@@ -34,7 +34,6 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Address" VerticalAlignment="Center" />
@@ -46,26 +45,21 @@
                 <Button Content="Disconnect" Command="{Binding DisconnectCommand}" Width="90" />
             </StackPanel>
 
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="Tell it" VerticalAlignment="Center" />
-            <TextBox Grid.Row="2" Grid.Column="1"
-                     Text="{Binding PressAddress, UpdateSourceTrigger=PropertyChanged}"
-                     Margin="0,0,8,4"
-                     ToolTip="Where to mention what happens in the game. A different key from the one above: what watches must never also press." />
-            <CheckBox Grid.Row="2" Grid.Column="2"
-                      Content="Say when I die"
-                      IsChecked="{Binding TellsOfDeath}"
-                      VerticalAlignment="Center"
-                      Margin="0,0,0,4" />
-
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Player" VerticalAlignment="Center" />
             <TextBox Grid.Row="1" Grid.Column="1"
                      Text="{Binding Seat, UpdateSourceTrigger=PropertyChanged}"
                      Margin="0,0,8,0"
                      ToolTip="Which player this is, where more than one is being driven. Optional." />
-            <CheckBox Grid.Row="1" Grid.Column="2"
-                      Content="Connect on start"
-                      IsChecked="{Binding ConnectOnStart}"
-                      VerticalAlignment="Center" />
+            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <CheckBox Content="Connect on start"
+                          IsChecked="{Binding ConnectOnStart}"
+                          VerticalAlignment="Center"
+                          Margin="0,0,12,0" />
+                <CheckBox Content="Say when I die"
+                          IsChecked="{Binding TellsOfDeath}"
+                          VerticalAlignment="Center"
+                          ToolTip="Tells whatever is connected that you died, on the same socket. It is a mention: what happens about it is the other end's business." />
+            </StackPanel>
         </Grid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
