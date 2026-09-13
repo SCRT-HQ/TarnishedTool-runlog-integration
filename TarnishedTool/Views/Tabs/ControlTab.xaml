@@ -20,9 +20,6 @@
         <StackPanel Grid.Row="0" Margin="0,0,0,10">
             <TextBlock TextWrapping="Wrap"
                        Text="Connect to a WebSocket server and let it change the game while you play: Streamer.bot for your chat and channel points, a Runlog run for the dice at the table, or anything of your own." />
-            <TextBlock Text="Offline only, like everything else here."
-                       Margin="0,4,0,0"
-                       Foreground="{StaticResource NotAttachedBrush}" />
         </StackPanel>
 
         <Grid Grid.Row="1" Margin="0,0,0,8">

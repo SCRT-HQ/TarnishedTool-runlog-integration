@@ -27,6 +27,7 @@
     <Compile Include="ProtocolChecks.cs" />
     <Compile Include="..\TarnishedTool\Control\Protocol.cs" Link="Protocol.cs" />
     <Compile Include="..\TarnishedTool\Control\Operations.cs" Link="Operations.cs" />
+    <Compile Include="..\TarnishedTool\Control\Consent.cs" Link="Consent.cs" />
   </ItemGroup>
 
   <ItemGroup>

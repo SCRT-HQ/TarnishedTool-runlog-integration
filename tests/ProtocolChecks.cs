@@ -109,6 +109,44 @@ static class Check
         Is("the doc's note", Frames.Read("{\"t\":\"note\",\"text\":\"hello\"}").Text, "hello");
         Is("the controller example", Frames.Read("{\"t\":\"apply\",\"id\":\"demo\",\"label\":\"No dodging\",\"for\":90,\"ops\":[{\"op\":\"flag.set\",\"args\":{\"name\":\"player.noRoll\",\"value\":true}}]}").Apply.Label, "No dodging");
 
+        // ---- what a player has agreed a source may do ----------------
+        //
+        // Kept as what was switched off. The other way round, every
+        // operation a later build learns arrives switched off for
+        // anybody who had ever touched this list, and says so only when
+        // a profile is refused by name.
+        var ops3 = new[] { "flag.set", "item.named", "warp.grace" };
+
+        var fresh = new Consent();
+        fresh.Load("", ops3);
+        Is("everything on to begin with", ops3.All(fresh.Allows), true);
+
+        var curated = new Consent();
+        curated.Load("", ops3);
+        curated.Set("warp.grace", false);
+        Is("keeps what was switched off", curated.Saved, "!warp.grace");
+
+        // The build after this one knows an operation the last did not.
+        var later = new Consent();
+        later.Load(curated.Saved, new[] { "flag.set", "item.named", "warp.grace", "weapon.named" });
+        Is("a new operation arrives on", later.Allows("weapon.named"), true);
+        Is("and the one switched off stays off", later.Allows("warp.grace"), false);
+
+        // Somebody who switched everything off meant it.
+        var noneAllowed = new Consent();
+        noneAllowed.Load("", ops3);
+        foreach (var op in ops3) noneAllowed.Set(op, false);
+        Is("nothing allowed reads back as nothing", noneAllowed.Saved, "-");
+        var stillNone = new Consent();
+        stillNone.Load("-", ops3);
+        Is("and stays nothing", ops3.Any(stillNone.Allows), false);
+
+        // A list written before this change is read as it was meant, so
+        // nobody's choices turn themselves back on.
+        var older = new Consent();
+        older.Load("flag.set,item.named", ops3);
+        Is("an older list still means what it said", older.Allows("flag.set") && !older.Allows("warp.grace"), true);
+
         Console.WriteLine(failures == 0 ? "\nall good" : "\n" + failures + " failed");
         return failures == 0 ? 0 : 1;
     }

@@ -112,6 +112,12 @@ Everything comes back off: when its time runs out, when its group is reverted, w
 
 You cannot read the game. There is no request for the player's health or position, and the only thing travelling the other way is what the tool volunteers, below.
 
+## What it may do
+
+Everything, until you say otherwise. The list on the tab is how a person switches something off, and what is kept is what they switched off rather than what they left on. The difference shows the first time a build learns a new operation: kept the other way round, anything added since somebody last touched that list arrives switched off, and says so only when a profile is refused by name.
+
+Switching all of it off is a thing somebody can mean, and it is remembered as itself.
+
 ## Watching it work
 
 The pane at the foot of the tab says what happened, newest first, forty lines deep. How much it says is up to the box beside it.

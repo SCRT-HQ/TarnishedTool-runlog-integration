@@ -12,27 +12,34 @@ namespace TarnishedTool.Control;
 /// Being moved across the map by somebody else's dice is fun by consent
 /// and unpleasant without it, so the list is here, in front of the person
 /// it happens to, rather than being a property of whatever is driving.
-/// The disruptive ones start off: a first connection can change settings
-/// and apply effects, and cannot warp anyone, hand out items or press a
-/// button, until this player says so.
+/// Everything starts on, and the list is how somebody turns a thing off:
+/// this only ever reaches a game that is already offline and already
+/// being driven on purpose, and a first connection that silently does
+/// half of what a profile says is worse than one that does all of it.
+///
+/// What is kept is therefore what was switched *off*, not what was left
+/// on. The difference shows the first time a build learns a new
+/// operation: kept the other way round, every operation added after
+/// somebody last touched this list arrives switched off, with nothing
+/// saying so until a profile is refused by name.
 /// </summary>
 public sealed class Consent
 {
-    private static readonly string[] OffUnlessAsked = { "warp.position", "warp.grace", "player.drop", "item.give", "item.named", "action.invoke" };
-
     private readonly HashSet<string> _allowed = new(StringComparer.Ordinal);
+    private readonly List<string> _all = new();
 
     public event Action Changed;
-
-    public static IEnumerable<string> DefaultFor(IEnumerable<string> ops) =>
-        ops.Where(op => !OffUnlessAsked.Contains(op, StringComparer.Ordinal));
 
     public void Load(string saved, IEnumerable<string> allOps)
     {
         _allowed.Clear();
+        _all.Clear();
+        _all.AddRange(allOps);
+
+        // Never touched: all of it.
         if (string.IsNullOrWhiteSpace(saved))
         {
-            foreach (var op in DefaultFor(allOps)) _allowed.Add(op);
+            foreach (var op in _all) _allowed.Add(op);
             return;
         }
 
@@ -40,6 +47,20 @@ public sealed class Consent
         // find it all switched on again tomorrow.
         if (saved.Trim() == Nothing) return;
 
+        if (saved.StartsWith(Denied, StringComparison.Ordinal))
+        {
+            var off = new HashSet<string>(
+                saved.Substring(Denied.Length).Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(o => o.Trim()),
+                StringComparer.Ordinal);
+            foreach (var op in _all)
+                if (!off.Contains(op))
+                    _allowed.Add(op);
+            return;
+        }
+
+        // Written by a build that kept the other list. Read as it was
+        // meant, so nobody's choices turn themselves back on; it is
+        // written the new way the next time they change one.
         foreach (var op in saved.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             _allowed.Add(op.Trim());
     }
@@ -47,7 +68,13 @@ public sealed class Consent
     /// <summary>Written where nothing is allowed, so that reads back as itself.</summary>
     private const string Nothing = "-";
 
-    public string Saved => _allowed.Count == 0 ? Nothing : string.Join(",", _allowed.OrderBy(o => o, StringComparer.Ordinal));
+    /// <summary>What follows is the list of operations switched off.</summary>
+    private const string Denied = "!";
+
+    public string Saved =>
+        _allowed.Count == 0
+            ? Nothing
+            : Denied + string.Join(",", _all.Where(op => !_allowed.Contains(op)).OrderBy(o => o, StringComparer.Ordinal));
 
     public bool Allows(string op) => _allowed.Contains(op);
 
