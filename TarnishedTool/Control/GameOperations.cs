@@ -33,7 +33,7 @@ public sealed class GameOperations
     private readonly ISpEffectService _spEffects;
     private readonly IPlayerService _player;
     private readonly ITravelService _travel;
-    private readonly IItemService _items;
+    private readonly IItemService _itemService;
     private readonly HotkeyManager _hotkeys;
     /// <summary>
     /// Every grace the tool knows, by area and by name.
@@ -45,6 +45,33 @@ public sealed class GameOperations
     /// would not.
     /// </summary>
     private readonly Lazy<List<Grace>> _graces = new(() => DataLoader.GetGraces().SelectMany(a => a.Value).ToList());
+
+    /// <summary>
+    /// Everything the tool knows how to hand over, by name.
+    ///
+    /// The same argument as the graces above. A source that wanted to
+    /// give somebody a Golden Seed would otherwise have to ship a number
+    /// out of the game's own data, and be wrong about it the first time
+    /// the game moved. It names the thing instead.
+    /// </summary>
+    private readonly Lazy<List<Item>> _items = new(() => new[]
+        {
+            DataLoader.GetItems("Consumables", "Consumables"),
+            DataLoader.GetItems("UpgradeMaterials", "Upgrade Materials"),
+            DataLoader.GetItems("CraftingMaterials", "Crafting Materials"),
+            DataLoader.GetItems("CrystalTears", "Crystal Tears"),
+            DataLoader.GetItems("Talismans", "Talismans"),
+            DataLoader.GetItems("Arrows", "Arrows"),
+            DataLoader.GetItems("PotsAndPerfumes", "Pots and Perfumes"),
+            DataLoader.GetItems("Sorceries", "Sorceries"),
+            DataLoader.GetItems("Incantations", "Incantations"),
+            // Key items, but only the ones that are simply given. The
+            // rest are tied to an event flag, and handing one over
+            // without the event behind it is how a quest breaks.
+            DataLoader.GetEventItems("KeyItems", "Key Items").Where(i => !i.NeedsEvent).Cast<Item>().ToList(),
+        }
+        .SelectMany(x => x)
+        .ToList());
 
     private sealed class Toggle
     {
@@ -74,7 +101,7 @@ public sealed class GameOperations
         _spEffects = spEffects;
         _player = playerService;
         _travel = travelService;
-        _items = items;
+        _itemService = items;
         _hotkeys = hotkeys;
 
         // What a run may switch on and off. The names are the tool's own
@@ -268,13 +295,50 @@ public sealed class GameOperations
             _player.SetPlayerPos(new Vector3(at.X, at.Y + height, at.Z));
         });
 
+        /**
+         * Something by name, for the same reason a place is named: an id
+         * belongs to one version of one game, and a name does not.
+         */
+        registry.RegisterOneShot("item.named", args =>
+        {
+            var name = (args.Text("name") ?? string.Empty).Trim();
+            if (name.Length == 0) throw new OperationRefused("item.named wants a name");
+            var quantity = args.Whole("quantity") ?? 1;
+            if (quantity < 1 || quantity > 99) throw new OperationRefused("item.named takes 1 to 99");
+            var found = _items.Value.Where(i => string.Equals(i.Name, name, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (found.Count == 0) throw new OperationRefused("nothing here is called " + name);
+            // Several things share a name in this game, and they are
+            // usually the same thing; the first will do.
+            _itemService.SpawnItem(found[0].Id, Math.Min(quantity, Math.Max(1, found[0].MaxStorage)), -1, true, Math.Max(1, found[0].MaxStorage));
+        });
+
+        /**
+         * A number moved by an amount, rather than set to one.
+         *
+         * Giving somebody five thousand runes is not the same as setting
+         * their runes to five thousand, and only one of those is a gift.
+         */
+        registry.Register("value.add", args =>
+        {
+            var name = args.Text("name");
+            var by = args.Real("by");
+            if (name == null || by == null) throw new OperationRefused("value.add wants a name and an amount");
+            if (!_values.TryGetValue(name, out var number)) throw new OperationRefused("no such value: " + name);
+            var was = number.Read();
+            var now = Math.Max(number.Least, Math.Min(number.Most, was + by.Value));
+            number.Write(now);
+            // Put back what it was, not what it became, in case the
+            // player earned some of the difference themselves.
+            return new[] { RevertStep.Of("value.set", "name", name, "value", was) };
+        });
+
         registry.RegisterOneShot("item.give", args =>
         {
             var id = args.Whole("id");
             if (id == null) throw new OperationRefused("item.give wants an id");
             var quantity = args.Whole("quantity") ?? 1;
             if (quantity < 1 || quantity > 99) throw new OperationRefused("item.give takes 1 to 99");
-            _items.SpawnItem(id.Value, quantity, args.Whole("ashOfWar") ?? -1, true, 99);
+            _itemService.SpawnItem(id.Value, quantity, args.Whole("ashOfWar") ?? -1, true, 99);
         });
 
         registry.RegisterOneShot("action.invoke", args =>
