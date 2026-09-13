@@ -53,6 +53,12 @@ public sealed class ApplyFrame
     public string Label { get; set; }
     /// <summary>Seconds it lasts, or null to hold until told otherwise.</summary>
     public int? For { get; set; }
+    /// <summary>
+    /// What it is filed under, where a source takes several effects back
+    /// together: everything a unit of play applied, coming off when that
+    /// unit closes. A source that works in seconds never sends one.
+    /// </summary>
+    public string Group { get; set; }
     public List<OpCall> Ops { get; } = new();
 }
 
@@ -62,6 +68,7 @@ public sealed class Incoming
     public string Kind { get; set; }
     public ApplyFrame Apply { get; set; }
     public string RevertId { get; set; }
+    public string RevertGroup { get; set; }
     public string Text { get; set; }
 }
 
@@ -98,6 +105,7 @@ public static class Frames
                         Id = StringOf(root, "id"),
                         Label = StringOf(root, "label"),
                         For = IntOf(root, "for"),
+                        Group = StringOf(root, "group"),
                     };
                     if (string.IsNullOrEmpty(frame.Id)) return new Incoming { Kind = "unreadable", Text = "an apply with no id" };
                     if (root.TryGetProperty("ops", out var ops) && ops.ValueKind == JsonValueKind.Array)
@@ -117,12 +125,16 @@ public static class Frames
                     return new Incoming { Kind = "apply", Apply = frame };
 
                 case "revert":
-                    // The reserved id "*" means everything in force; a
-                    // run that has ended sends that rather than naming
-                    // each effect, since only the tool knows what it is
-                    // still holding.
+                    // Three ways to be told to take something back: by
+                    // name, by the group several effects were filed
+                    // under, or with the reserved id "*" for everything.
+                    // A source that has finished says the last of those
+                    // rather than naming each effect, since only the tool
+                    // knows what it is still holding.
+                    var group = StringOf(root, "group");
+                    if (!string.IsNullOrEmpty(group)) return new Incoming { Kind = "revert", RevertGroup = group };
                     var id = StringOf(root, "id");
-                    if (string.IsNullOrEmpty(id)) return new Incoming { Kind = "unreadable", Text = "a revert with no id" };
+                    if (string.IsNullOrEmpty(id)) return new Incoming { Kind = "unreadable", Text = "a revert with nothing to take back" };
                     return new Incoming { Kind = "revert", RevertId = id };
 
                 case "note":

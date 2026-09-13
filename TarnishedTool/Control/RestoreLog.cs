@@ -12,6 +12,7 @@ public sealed class StoredEffect
 {
     public string Id { get; set; }
     public string Label { get; set; }
+    public string Group { get; set; }
     public List<StoredStep> Steps { get; set; } = new();
 }
 

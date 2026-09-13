@@ -279,7 +279,8 @@ public class ControlViewModel : BaseViewModel
                 _runner.Apply(incoming.Apply);
                 break;
             case "revert":
-                _runner.Revert(incoming.RevertId);
+                if (!string.IsNullOrEmpty(incoming.RevertGroup)) _runner.RevertGroup(incoming.RevertGroup);
+                else _runner.Revert(incoming.RevertId);
                 break;
             case "note":
                 Say(incoming.Text);

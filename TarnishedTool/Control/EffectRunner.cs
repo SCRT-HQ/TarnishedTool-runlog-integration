@@ -12,6 +12,8 @@ public sealed class LiveEffect
 {
     public string Id { get; set; }
     public string Label { get; set; }
+    /// <summary>What it is filed under, where several come off together.</summary>
+    public string Group { get; set; }
     /// <summary>When it comes off by itself, or null to hold until told.</summary>
     public DateTime? Until { get; set; }
     public List<RevertStep> Reverts { get; } = new();
@@ -152,6 +154,7 @@ public sealed class EffectRunner
             Id = frame.Id,
             Label = string.IsNullOrEmpty(frame.Label) ? frame.Id : frame.Label,
             Until = frame.For.HasValue && frame.For.Value > 0 ? DateTime.UtcNow.AddSeconds(frame.For.Value) : (DateTime?)null,
+            Group = frame.Group,
         };
 
         foreach (var call in frame.Ops)
@@ -193,6 +196,32 @@ public sealed class EffectRunner
         }
 
         Revert(id, quiet: false);
+    }
+
+    /// <summary>
+    /// Everything filed under one group, off together.
+    ///
+    /// Which is how an effect that lasts a unit of play ends: the source
+    /// says when the unit closed, and the tool knows what it applied
+    /// while that unit was open.
+    /// </summary>
+    public void RevertGroup(string group)
+    {
+        if (string.IsNullOrEmpty(group)) return;
+        var going = _live.Where(e => string.Equals(e.Group, group, StringComparison.Ordinal)).ToList();
+        var waiting = _waiting.Where(w => string.Equals(w.Frame.Group, group, StringComparison.Ordinal)).ToList();
+        foreach (var w in waiting) _waiting.Remove(w);
+        if (going.Count == 0)
+        {
+            if (waiting.Count > 0) Changed?.Invoke();
+            return;
+        }
+
+        foreach (var effect in Enumerable.Reverse(going)) Undo(effect);
+        foreach (var effect in going) _live.Remove(effect);
+        Save();
+        Log("Took back " + going.Count + (going.Count == 1 ? " effect" : " effects") + " from " + group);
+        Changed?.Invoke();
     }
 
     private void Revert(string id, bool quiet)
@@ -297,6 +326,7 @@ public sealed class EffectRunner
     {
         Id = e.Id,
         Label = e.Label,
+        Group = e.Group,
         Steps = e.Reverts.Select(r => new StoredStep { Op = r.Op, Args = r.Args }).ToList(),
     }));
 
