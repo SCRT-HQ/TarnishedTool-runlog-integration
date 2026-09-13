@@ -1,23 +1,14 @@
 # Driving this tool from something else
 
-The Control tab holds a WebSocket address and dials it. What is on the
-other end is not its business: it says what it can do, performs what it
-is asked for, and puts everything back afterwards. Runlog is one thing
-that can sit there. So is a chat bot, a stream deck, or a script you
-wrote this afternoon.
+The Control tab holds a WebSocket address and dials it. What is on the other end is not its business: it says what it can do, performs what it is asked for, and puts everything back afterwards. Runlog is one thing that can sit there. So is a chat bot, a stream deck, or a script you wrote this afternoon.
 
 This is what the other end has to do.
 
-Everything here edits the memory of a running game. That is against the
-terms of service of every game that has any, and doing it while the game
-is online is how accounts get banned. Offline, single player, by
-yourself.
+**This is for offline use only. Everything here edits the memory of a running game, which violates the Terms of Service and will most likely lead to a ban if you do it online.** The game goes offline; the machine it runs on does not have to, and a controller reaching it over a socket is not what gets anybody banned.
 
 ## The transport
 
-A WebSocket, and nothing else. `ws://` or `wss://`, whatever you paste in
-the Address box; there is no HTTP fallback, no long poll, and no other
-scheme.
+A WebSocket, and nothing else. `ws://` or `wss://`, whatever you paste in the Address box; there is no HTTP fallback, no long poll, and no other scheme.
 
 | | |
 | --- | --- |
@@ -30,9 +21,7 @@ scheme.
 | Reconnecting | On its own, backing off one second, then two, four, and so on to thirty. A drop is ordinary and the tool treats it that way. |
 | Closing | A normal close is answered and the loop reconnects. Whatever was applied stays for ninety seconds, then comes off. |
 
-Nothing the tool sends is a request. There is no reply to wait for, no
-correlation id, and no ordering requirement beyond the obvious: an
-`apply` has to arrive before the `revert` that takes it back.
+Nothing the tool sends is a request. There is no reply to wait for, no correlation id, and no ordering requirement beyond the obvious: an `apply` has to arrive before the `revert` that takes it back.
 
 ## The shape of it
 
@@ -46,9 +35,7 @@ tool  → applied  whether it worked, and when it comes off
 tool  → event    something happened in the game
 ```
 
-Every message is one JSON object on its own frame. Anything a side does
-not recognize is ignored rather than treated as an error. That is what
-lets one end speak a later version of this than the other.
+Every message is one JSON object on its own frame. Anything a side does not recognize is ignored rather than treated as an error. That is what lets one end speak a later version of this than the other.
 
 ### hello
 
@@ -66,9 +53,7 @@ Sent the moment the socket opens.
 }
 ```
 
-Send only the operations `ops` lists. Anything else is refused by name
-and nothing happens. `seat` is what the person typed in the Player box,
-for a controller driving more than one machine.
+Send only the operations `ops` lists. Anything else is refused by name and nothing happens. `seat` is what the person typed in the Player box, for a controller driving more than one machine.
 
 ### apply
 
@@ -108,36 +93,21 @@ for a controller driving more than one machine.
 { "t": "revert", "id": "*" }
 ```
 
-`*` means everything in force. Send it when whatever you are doing is
-over, since the tool is the one that knows what it is still holding.
+`*` means everything in force. Send it when whatever you are doing is over, since the tool is the one that knows what it is still holding.
 
 ### note
 
-Anything you send with `t: "note"` and a `text` is written into the
-tool's log. Useful for saying why nothing is happening.
+Anything you send with `t: "note"` and a `text` is written into the tool's log. Useful for saying why nothing is happening.
 
 ## What it will and will not do
 
-Every operation has to be one the person allowed. The Control tab lists
-them with a checkbox each, and warps, items and button presses start
-switched off. One that is switched off is refused by name, the same as
-one that does not exist.
+Every operation has to be one the person allowed. The Control tab lists them with a checkbox each, and warps, items and button presses start switched off. One that is switched off is refused by name, the same as one that does not exist.
 
-Nothing is written unless the game is attached, loaded and past the
-fade-in. An apply that arrives during a loading screen waits up to
-forty-five seconds, and is dropped with an answer if it waits longer. A
-warp refuses immediately instead, because arriving somewhere unexpected
-four minutes late is worse than not arriving.
+Nothing is written unless the game is attached, loaded and past the fade-in. An apply that arrives during a loading screen waits up to forty-five seconds, and is dropped with an answer if it waits longer. A warp refuses immediately instead, because arriving somewhere unexpected four minutes late is worse than not arriving.
 
-Everything comes back off: when its time runs out, when its group is
-reverted, when you say so, when the connection stays gone, when the game
-closes, when the tool closes. What it restores is what the player had,
-not a switch flipped the other way, so a setting somebody turned on by
-hand survives your borrowing it.
+Everything comes back off: when its time runs out, when its group is reverted, when you say so, when the connection stays gone, when the game closes, when the tool closes. What it restores is what the player had, not a switch flipped the other way, so a setting somebody turned on by hand survives your borrowing it.
 
-You cannot read the game. There is no request for the player's health or
-position, and the only thing travelling the other way is what the tool
-volunteers, below.
+You cannot read the game. There is no request for the player's health or position, and the only thing travelling the other way is what the tool volunteers, below.
 
 ## What the game tells you
 
@@ -147,22 +117,15 @@ One frame, on the same socket, off by default:
 { "t": "event", "kind": "died" }
 ```
 
-It is a mention, not a command. Whatever is listening decides what it
-means and whether to do anything, including nothing. Runlog turns it into
-an ask, which the table still has to accept; a script would probably just
-log it.
+It is a mention, not a command. Whatever is listening decides what it means and whether to do anything, including nothing. Runlog turns it into an ask, which the table still has to accept; a script would probably just log it.
 
-A kind you do not know is ignored, so a later build saying more than
-`died` will not break an older controller.
+A kind you do not know is ignored, so a later build saying more than `died` will not break an older controller.
 
-Switched on by **Say when I die** in the Control tab. There is no second
-address and no second key: if something is connected, it hears this, and
-if nothing is, nothing is sent.
+Switched on by **Say when I die** in the Control tab. There is no second address and no second key: if something is connected, it hears this, and if nothing is, nothing is sent.
 
 ## A controller, in full
 
-Node, with `ws`. Run it, put `ws://127.0.0.1:8787` in the Control tab,
-press Connect.
+Node, with `ws`. Run it, put `ws://127.0.0.1:8787` in the Control tab, press Connect.
 
 ```js
 import { WebSocketServer } from "ws";
@@ -203,52 +166,26 @@ Everything else is deciding *when* to send one.
 
 ## Streamer.bot
 
-Streamer.bot is the obvious controller for a stream: it already knows
-about channel points, bits, subscriptions, chat commands and a stream
-deck, and any of those could apply an effect.
+Streamer.bot is the obvious controller for a stream: it already knows about channel points, bits, subscriptions, chat commands and a stream deck, and any of those could apply an effect.
 
-It runs a WebSocket server of its own, the right shape for this, since
-the tool is a client and wants something to dial. The address is
-the one in Streamer.bot under **Servers/Clients → WebSocket Server**,
-usually `ws://127.0.0.1:8080/`.
+It runs a WebSocket server of its own, the right shape for this, since the tool is a client and wants something to dial. The address is the one in Streamer.bot under **Servers/Clients → WebSocket Server**, usually `ws://127.0.0.1:8080/`.
 
-Two things have to be true for this to work, and **neither has been
-tested against a real instance yet**:
+Two things have to be true for this to work, and **neither has been tested against a real instance yet**:
 
-1. A client that is not a Streamer.bot client may connect. Its
-   WebSocket server speaks its own protocol, in which a client subscribes
-   to events and makes requests. This tool speaks neither: it sends one
-   `hello` and waits. Streamer.bot has to tolerate a client that says
-   something it does not recognize rather than closing the socket on it.
-2. An action can push arbitrary JSON to a connected client. The C#
-   sub-action API has a broadcast for the WebSocket server, and that is
-   what an action fired by a redeem would use to send an `apply`. Whether the
-   broadcast reaches a client that never subscribed to anything is the
-   thing to check.
+1. A client that is not a Streamer.bot client may connect. Its WebSocket server speaks its own protocol, in which a client subscribes to events and makes requests. This tool speaks neither: it sends one `hello` and waits. Streamer.bot has to tolerate a client that says something it does not recognize rather than closing the socket on it.
+2. An action can push arbitrary JSON to a connected client. The C# sub-action API has a broadcast for the WebSocket server, and that is what an action fired by a redeem would use to send an `apply`. Whether the broadcast reaches a client that never subscribed to anything is the thing to check.
 
-If both hold, a channel-point reward becomes one C# sub-action that
-broadcasts an `apply`, and nothing else is needed. If the first fails,
-the answer is a small relay: the controller above, listening for this
-tool on one port and for Streamer.bot's client API on another.
+If both hold, a channel-point reward becomes one C# sub-action that broadcasts an `apply`, and nothing else is needed. If the first fails, the answer is a small relay: the controller above, listening for this tool on one port and for Streamer.bot's client API on another.
 
-Anyone who tests this against a real Streamer.bot, please open an issue
-saying which of the two held, and with which version. Documentation that
-cannot be followed is worse than none, and this section is a hypothesis
-until somebody has run it.
+Anyone who tests this against a real Streamer.bot, please open an issue saying which of the two held, and with which version. Documentation that cannot be followed is worse than none, and this section is a hypothesis until somebody has run it.
 
 ### An importable action
 
-The intention is to ship a Streamer.bot import string here: the actions,
-the broadcast, and a reward or two already wired. It is not written yet,
-for the reason above. It will be built by hand in a real instance and
-exported, rather than generated, because their import format is opaque
-and has broken compatibility before; and it will say which release it was
-built against.
+The intention is to ship a Streamer.bot import string here: the actions, the broadcast, and a reward or two already wired. It is not written yet, for the reason above. It will be built by hand in a real instance and exported, rather than generated, because their import format is opaque and has broken compatibility before; and it will say which release it was built against.
 
 ## The operations this build offers
 
-The authoritative list is the `ops` in `hello`, and the Control tab shows
-the same list with what is switched on. As of this build:
+The authoritative list is the `ops` in `hello`, and the Control tab shows the same list with what is switched on. As of this build:
 
 | Operation | Arguments | Notes |
 | --- | --- | --- |
@@ -264,14 +201,6 @@ the same list with what is switched on. As of this build:
 | `value.add` | `name`, `by` | Moves a number rather than setting it. Reverts to what it was, not to what it became. |
 | `action.invoke` | `action` | Fifteen of the tool's own buttons. Off by default. |
 
-The names for `flag.set` and `value.set` are listed in
-`TarnishedTool/Control/GameOperations.cs`, which is the one file in the
-control layer that knows what game this is. The names `warp.grace` takes
-are the game's own, as the tool's grace list spells them; the Travel tab
-shows the same list.
+The names for `flag.set` and `value.set` are listed in `TarnishedTool/Control/GameOperations.cs`, which is the one file in the control layer that knows what game this is. The names `warp.grace` takes are the game's own, as the tool's grace list spells them; the Travel tab shows the same list.
 
-Two of these exist because a controller cannot know where a player is
-standing. A source that wants somebody moved cannot say "the nearest
-cave" and cannot honestly ship coordinates either, since those belong to
-one machine and one patch. It can name a place, which stays true, or it
-can ask for straight up, which needs nothing at all.
+Two of these exist because a controller cannot know where a player is standing. A source that wants somebody moved cannot say "the nearest cave" and cannot honestly ship coordinates either, since those belong to one machine and one patch. It can name a place, which stays true, or it can ask for straight up, which needs nothing at all.
