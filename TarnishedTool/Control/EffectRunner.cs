@@ -236,6 +236,29 @@ public sealed class EffectRunner
             return;
         }
 
+        // A name ending in the same character takes back everything
+        // filed under it. One result can match several rules and so
+        // apply several effects, each under its own number, and a
+        // source taking that result back knows the number and not how
+        // many rules it happened to match.
+        if (id != null && id.EndsWith(Everything, StringComparison.Ordinal))
+        {
+            var prefix = id.Substring(0, id.Length - Everything.Length);
+            var going = _live.Where(e => e.Id.StartsWith(prefix, StringComparison.Ordinal)).ToList();
+            foreach (var effect in Enumerable.Reverse(going)) Undo(effect);
+            foreach (var effect in going) _live.Remove(effect);
+            var dropped = _waiting.Where(w => w.Frame.Id.StartsWith(prefix, StringComparison.Ordinal)).ToList();
+            foreach (var w in dropped) _waiting.Remove(w);
+            if (going.Count > 0 || dropped.Count > 0)
+            {
+                Save();
+                Log("Took back " + (going.Count + dropped.Count) + (going.Count + dropped.Count == 1 ? " effect" : " effects") + " from " + prefix);
+                Changed?.Invoke();
+            }
+
+            return;
+        }
+
         Revert(id, quiet: false);
     }
 

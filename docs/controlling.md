@@ -93,10 +93,13 @@ Send only the operations `ops` lists. Anything else is refused by name and nothi
 ```json
 { "t": "revert", "id": "curse-4" }
 { "t": "revert", "group": "round-3" }
+{ "t": "revert", "id": "o4#*" }
 { "t": "revert", "id": "*" }
 ```
 
 `*` means everything in force. Send it when whatever you are doing is over, since the tool is the one that knows what it is still holding.
+
+An id ending in `*` means everything filed under what comes before it. One result can match several rules and so apply several effects, each under its own id; a source taking that result back knows the result and not how many rules it happened to match. Runlog sends this when somebody undoes the move that drew a result.
 
 ### note
 
