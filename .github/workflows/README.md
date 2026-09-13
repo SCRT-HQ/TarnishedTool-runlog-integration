@@ -21,7 +21,7 @@ Off until the secrets are set, and the build is the same unsigned executable it 
 | `AZURE_SIGNING_ACCOUNT` | The signing account's name. |
 | `AZURE_CERTIFICATE_PROFILE` | The certificate profile to sign under. |
 
-The endpoint and the account have to name the region they were created in, which is the usual first thing to be wrong. The app registration needs the **Trusted Signing Certificate Profile Signer** role on the signing account, which is granted under Access control (IAM) there and is not implied by owning the subscription.
+The endpoint and the account have to name the region they were created in, which is the usual first thing to be wrong. The app registration needs the **Artifact Signing Certificate Profile Signer** role on the signing account, which is granted under Access control (IAM) there and is not implied by owning the subscription.
 
 ### Not SignPath
 
