@@ -178,6 +178,7 @@ public enum HotkeyActions
     OpenSpiritTuning,
     FullShopLineup,
     UnlockAffinites,
+    GiveStartingFlasks,
     UnlockGestures,
     FightEldenBeast,
     FightFortissax,
