@@ -379,6 +379,7 @@ namespace TarnishedTool.ViewModels
             _hotkeyManager.RegisterAction(HotkeyActions.GiveStartingFlasks, () => SafeExecute(GiveStartingFlasks));
             _hotkeyManager.RegisterAction(HotkeyActions.GiveTalismanPouches, () => SafeExecute(GiveTalismanPouches));
             _hotkeyManager.RegisterAction(HotkeyActions.GiveStartingGifts, () => SafeExecute(GiveStartingGifts));
+            _hotkeyManager.RegisterAction(HotkeyActions.GiveGreatRunes, () => SafeExecute(GiveGreatRunes));
             _hotkeyManager.RegisterAction(HotkeyActions.UnlockGestures, () => SafeExecute(UnlockAllGesturesInternal));
             _hotkeyManager.RegisterAction(HotkeyActions.FightEldenBeast, () => SafeExecute(FightEldenBeast));
             _hotkeyManager.RegisterAction(HotkeyActions.FightFortissax, () => SafeExecute(FightFortissax));
@@ -456,6 +457,22 @@ namespace TarnishedTool.ViewModels
         private void GiveStartingGifts()
         {
             foreach (var (item, flag) in Event.StartingGifts)
+            {
+                _itemService.SpawnItem(item, 1, -1, false, 1);
+                _eventService.SetEvent(flag, true);
+            }
+        }
+
+        /// <summary>
+        /// The great runes, restored, and a handful of arcs to spend.
+        ///
+        /// Item and event both, as the starting gifts are: the rune is
+        /// a thing you equip and the event is what the game reads to
+        /// know it was restored.
+        /// </summary>
+        private void GiveGreatRunes()
+        {
+            foreach (var (item, flag) in Event.GreatRunes)
             {
                 _itemService.SpawnItem(item, 1, -1, false, 1);
                 _eventService.SetEvent(flag, true);

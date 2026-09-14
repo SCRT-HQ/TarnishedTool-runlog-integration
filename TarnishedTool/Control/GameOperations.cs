@@ -290,6 +290,7 @@ public sealed class GameOperations
         HotkeyActions.GiveStartingFlasks,
         HotkeyActions.GiveTalismanPouches,
         HotkeyActions.GiveStartingGifts,
+        HotkeyActions.GiveGreatRunes,
         HotkeyActions.FightFortissax,
         HotkeyActions.FightEldenBeast,
     };

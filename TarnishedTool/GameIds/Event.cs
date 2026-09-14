@@ -47,6 +47,24 @@ public static class Event
         (0x400000FA, 60020)  // Flask of Wondrous Physick
     ];
 
+    /// <summary>
+    /// The great runes, in the form that is worth having.
+    ///
+    /// Each exists twice: the one a boss drops, and the one a Divine
+    /// Tower gives back for it. Only the second does anything, so
+    /// these are the restored ones -- a run handed the other would
+    /// still owe the game a climb.
+    /// </summary>
+    public static readonly (int Item, long Event)[] GreatRunes = [
+        (0x400000BF, 191), // Godrick
+        (0x400000C0, 192), // Radahn
+        (0x400000C1, 193), // Morgott
+        (0x400000C2, 194), // Rykard
+        (0x400000C3, 195), // Mohg
+        (0x400000C4, 196), // Malenia
+        (0x40002760, 197)  // Great Rune of the Unborn, which is Rennala's
+    ];
+
     public static readonly long ClearDlc = 70;
     public static readonly long SeeUndergroundGraces = 82001;
     public static readonly long SeeDlcGraces = 82002;

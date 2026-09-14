@@ -181,6 +181,7 @@ public enum HotkeyActions
     GiveStartingFlasks,
     GiveTalismanPouches,
     GiveStartingGifts,
+    GiveGreatRunes,
     UnlockGestures,
     FightEldenBeast,
     FightFortissax,

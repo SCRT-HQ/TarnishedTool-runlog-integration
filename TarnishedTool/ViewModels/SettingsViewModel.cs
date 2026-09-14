@@ -245,6 +245,7 @@ public class SettingsViewModel : BaseViewModel
                 new("Give Starting Flasks", HotkeyActions.GiveStartingFlasks),
                 new("Give Talisman Pouches", HotkeyActions.GiveTalismanPouches),
                 new("Give Starting Gifts", HotkeyActions.GiveStartingGifts),
+                new("Give Great Runes", HotkeyActions.GiveGreatRunes),
                 new("Unlock Gestures", HotkeyActions.UnlockGestures),
                 new("Fight Elden Beast", HotkeyActions.FightEldenBeast),
                 new("Fight Fortissax", HotkeyActions.FightFortissax),
