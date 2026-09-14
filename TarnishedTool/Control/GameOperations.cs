@@ -33,6 +33,14 @@ public sealed class GameOperations
     private readonly ISpEffectService _spEffects;
     private readonly IPlayerService _player;
     private readonly ITravelService _travel;
+
+    /// <summary>
+    /// The Travel tab, kept only to ask whether a save is loaded.
+    ///
+    /// Every tab tracks it and they all agree; this one is already a
+    /// dependency, so it is the cheapest to ask.
+    /// </summary>
+    private readonly TravelViewModel _travelTab;
     private readonly IItemService _itemService;
     private readonly HotkeyManager _hotkeys;
     private readonly Watches _watches;
@@ -143,6 +151,7 @@ public sealed class GameOperations
         _spEffects = spEffects;
         _player = playerService;
         _travel = travelService;
+        _travelTab = travel;
         _itemService = items;
         _hotkeys = hotkeys;
         _watches = watches;
@@ -597,6 +606,16 @@ public sealed class GameOperations
             if (name == null) throw new OperationRefused("action.invoke wants an action");
             if (!Pressable.Any(a => string.Equals(a.ToString(), name, StringComparison.Ordinal)))
                 throw new OperationRefused(name + " is not one a source may press");
+            // A press with no game under it does nothing and says nothing.
+            //
+            // Every one of these reaches into the running game, and the
+            // tool's own handlers return quietly when no save is loaded,
+            // which is right for a keyboard and wrong for a source: the
+            // frame was accepted, the log said it was applied, and the
+            // talisman pouches did not arrive. Refused here instead, so
+            // the run is told the same way it is told about a name this
+            // build does not have.
+            if (!_travelTab.AreOptionsEnabled) throw new OperationRefused(name + " needs the game loaded, and it is not");
             if (!_hotkeys.TryInvoke(name)) throw new OperationRefused(name + " is not registered in this build");
         });
     }
