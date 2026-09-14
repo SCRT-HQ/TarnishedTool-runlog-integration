@@ -244,7 +244,6 @@ public class ControlViewModel : BaseViewModel
         {
             if (!SetProperty(ref _address, value)) return;
             SettingsManager.Default.ControlAddress = value;
-            OnPropertyChanged(nameof(Seat));
             SettingsManager.Default.Save();
         }
     }
@@ -281,39 +280,6 @@ public class ControlViewModel : BaseViewModel
             SettingsManager.Default.ControlTellsOfDeath = value;
             SettingsManager.Default.Save();
         }
-    }
-
-    /// <summary>
-    /// Which player this is, read out of the address rather than typed.
-    ///
-    /// It used to be a box of its own, and the box did nothing: the far
-    /// end takes the seat from `seat=` in the address, at the moment the
-    /// socket opens, and never reads the one in the hello. So a person
-    /// who typed a name here and pasted a line naming somebody else was
-    /// told they were one player while the run believed the other, with
-    /// nothing anywhere to say which had won.
-    ///
-    /// One address is all a person should need. This says what that
-    /// address claims, so it can be read back and checked, and there is
-    /// no second place for it to disagree with.
-    /// </summary>
-    public string Seat => SeatIn(Address);
-
-    /// <summary>The `seat` in an address, or empty where it names none.</summary>
-    public static string SeatIn(string address)
-    {
-        if (string.IsNullOrWhiteSpace(address)) return string.Empty;
-        var q = address.IndexOf('?');
-        if (q < 0) return string.Empty;
-        foreach (var part in address.Substring(q + 1).Split('&'))
-        {
-            var eq = part.IndexOf('=');
-            if (eq <= 0) continue;
-            if (!string.Equals(part.Substring(0, eq), "seat", StringComparison.OrdinalIgnoreCase)) continue;
-            try { return Uri.UnescapeDataString(part.Substring(eq + 1)); }
-            catch { return part.Substring(eq + 1); }
-        }
-        return string.Empty;
     }
 
     public bool ConnectOnStart
@@ -356,7 +322,7 @@ public class ControlViewModel : BaseViewModel
     private string Manifest()
     {
         var version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "0.0.0";
-        return Frames.Hello(version, Seat, "ELDEN RING", _memory.IsAttached ? "attached" : "not attached", _registry.Names);
+        return Frames.Hello(version, "ELDEN RING", _memory.IsAttached ? "attached" : "not attached", _registry.Names);
     }
 
     private void OnStatusChanged(string status)

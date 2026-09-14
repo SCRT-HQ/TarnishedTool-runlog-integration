@@ -42,13 +42,6 @@
                 <Button Content="Disconnect" Command="{Binding DisconnectCommand}" Width="90" />
             </StackPanel>
 
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="Player" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="1" Grid.Column="1"
-                       Text="{Binding Seat}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,8,0"
-                       Foreground="{DynamicResource DimTextBrush}"
-                       ToolTip="Read from the address. Paste the line for the player you are, and this says who that is." />
             <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <CheckBox Content="Connect on start"
                           IsChecked="{Binding ConnectOnStart}"

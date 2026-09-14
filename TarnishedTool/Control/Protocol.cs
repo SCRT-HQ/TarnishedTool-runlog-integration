@@ -1,4 +1,4 @@
-//
+﻿//
 
 using System;
 using System.Collections.Generic;
@@ -160,7 +160,7 @@ public static class Frames
     }
 
     /// <summary>What this build is and what it can be asked for.</summary>
-    public static string Hello(string version, string seat, string gameTitle, string gamePatch, IEnumerable<string> ops)
+    public static string Hello(string version, string gameTitle, string gamePatch, IEnumerable<string> ops)
     {
         var w = new Writer();
         w.Open();
@@ -168,7 +168,6 @@ public static class Frames
         w.Number("protocol", Protocol.Version);
         w.Text("app", "TarnishedTool");
         w.Text("version", version);
-        if (!string.IsNullOrWhiteSpace(seat)) w.Text("seat", seat);
         w.Raw("game", "{\"title\":" + Json(gameTitle) + ",\"patch\":" + Json(gamePatch) + "}");
         w.Array("ops", ops);
         w.Close();

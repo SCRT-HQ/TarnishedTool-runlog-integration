@@ -133,7 +133,6 @@ public class SettingsManager
     // The Control tab. The address carries a key, so it is the one setting
     // in this file worth keeping out of a screenshot.
     public string ControlAddress { get; set; } = "";
-    public string ControlSeat { get; set; } = "";
     public bool ControlConnectOnStart { get; set; }
     public string ControlAllowedOperations { get; set; } = "";
     /// <summary>
