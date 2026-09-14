@@ -242,6 +242,7 @@ public class SettingsViewModel : BaseViewModel
                 new("Get Event State", HotkeyActions.GetEvent),
                 new("Set Event State", HotkeyActions.SetEvent),
                 new("Unlock Affinites", HotkeyActions.UnlockAffinites),
+                new("Give Starting Flasks", HotkeyActions.GiveStartingFlasks),
                 new("Unlock Gestures", HotkeyActions.UnlockGestures),
                 new("Fight Elden Beast", HotkeyActions.FightEldenBeast),
                 new("Fight Fortissax", HotkeyActions.FightFortissax),
