@@ -289,6 +289,7 @@ public sealed class GameOperations
         HotkeyActions.UnlockMetyr,
         HotkeyActions.GiveStartingFlasks,
         HotkeyActions.GiveTalismanPouches,
+        HotkeyActions.GiveStartingGifts,
         HotkeyActions.FightFortissax,
         HotkeyActions.FightEldenBeast,
     };

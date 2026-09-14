@@ -378,6 +378,7 @@ namespace TarnishedTool.ViewModels
             _hotkeyManager.RegisterAction(HotkeyActions.UnlockAffinites, () => SafeExecute(UnlockWhetblades));
             _hotkeyManager.RegisterAction(HotkeyActions.GiveStartingFlasks, () => SafeExecute(GiveStartingFlasks));
             _hotkeyManager.RegisterAction(HotkeyActions.GiveTalismanPouches, () => SafeExecute(GiveTalismanPouches));
+            _hotkeyManager.RegisterAction(HotkeyActions.GiveStartingGifts, () => SafeExecute(GiveStartingGifts));
             _hotkeyManager.RegisterAction(HotkeyActions.UnlockGestures, () => SafeExecute(UnlockAllGesturesInternal));
             _hotkeyManager.RegisterAction(HotkeyActions.FightEldenBeast, () => SafeExecute(FightEldenBeast));
             _hotkeyManager.RegisterAction(HotkeyActions.FightFortissax, () => SafeExecute(FightFortissax));
@@ -439,6 +440,25 @@ namespace TarnishedTool.ViewModels
             foreach (var whetBlade in Event.WhetBlades)
             {
                 _eventService.SetEvent(whetBlade, true);
+            }
+        }
+
+        /// <summary>
+        /// The gifts the opening hours hand over: Torrent's whistle, the
+        /// Spirit Calling Bell, the crafting kit, the tailoring tools and
+        /// the Physick flask.
+        ///
+        /// Item and event both, because they do different work: the event
+        /// stops the game awarding it again and tells the menus the thing
+        /// exists, the item is what gets used. Spawned the way
+        /// `UnlockWhetblades` spawns its knife.
+        /// </summary>
+        private void GiveStartingGifts()
+        {
+            foreach (var (item, flag) in Event.StartingGifts)
+            {
+                _itemService.SpawnItem(item, 1, -1, false, 1);
+                _eventService.SetEvent(flag, true);
             }
         }
 

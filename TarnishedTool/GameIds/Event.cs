@@ -27,6 +27,26 @@ public static class Event
         60520  // Golden Shade Godfrey
     ];
 
+    /// <summary>
+    /// What the opening hours of the game hand over, as item and event
+    /// together.
+    ///
+    /// Both halves are needed and they do different work. The event is
+    /// what stops the game awarding it a second time and what the menus
+    /// read to decide a thing is available; the item is what you
+    /// actually use. `UnlockWhetblades` beside this sets flags alone
+    /// because a whetblade is a token and nothing holds it -- a whistle
+    /// is not, and a flag without the whistle is a horse you cannot
+    /// call.
+    /// </summary>
+    public static readonly (int Item, long Event)[] StartingGifts = [
+        (0x40000082, 60100), // Spectral Steed Whistle, which is Torrent
+        (0x40001FDE, 60110), // Spirit Calling Bell, which is summons
+        (0x40002134, 60120), // Crafting Kit
+        (0x40001FE3, 60140), // Tailoring Tools
+        (0x400000FA, 60020)  // Flask of Wondrous Physick
+    ];
+
     public static readonly long ClearDlc = 70;
     public static readonly long SeeUndergroundGraces = 82001;
     public static readonly long SeeDlcGraces = 82002;
