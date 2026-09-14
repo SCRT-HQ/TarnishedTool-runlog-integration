@@ -65,6 +65,21 @@ public static class Event
         (0x40002760, 197)  // Great Rune of the Unborn, which is Rennala's
     ];
 
+    /// <summary>
+    /// Melina's accord, which is what lets a run spend runes on levels.
+    ///
+    /// Captured with the event logger at the moment the offer was
+    /// accepted. Thirty-eight flags moved and this was the only global
+    /// one set: the rest that went true are map-local, saying the
+    /// conversation happened at that spot, and the globals that went
+    /// false are 4652-4657, 4670 and 4698, which is the game retiring
+    /// the offer it had waiting at every other grace.
+    ///
+    /// Only this one is set here. Clearing the others is the game
+    /// tidying up after itself and not a thing worth imitating.
+    /// </summary>
+    public static readonly long MelinasAccord = 4680;
+
     public static readonly long ClearDlc = 70;
     public static readonly long SeeUndergroundGraces = 82001;
     public static readonly long SeeDlcGraces = 82002;

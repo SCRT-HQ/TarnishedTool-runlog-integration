@@ -456,6 +456,10 @@ namespace TarnishedTool.ViewModels
         /// </summary>
         private void GiveStartingGifts()
         {
+            // Leveling is not a gift with an item behind it: it is
+            // Melina's accord and nothing more.
+            _eventService.SetEvent(Event.MelinasAccord, true);
+
             foreach (var (item, flag) in Event.StartingGifts)
             {
                 _itemService.SpawnItem(item, 1, -1, false, 1);
