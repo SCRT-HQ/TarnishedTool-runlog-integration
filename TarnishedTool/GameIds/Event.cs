@@ -21,10 +21,24 @@ public static class Event
     /// all three, so spawning the item hands over one thing and the
     /// slots come from the flags.
     /// </summary>
-    public static readonly long[] TalismanPouches = [
-        60500, // Enia
-        60510, // Margit/Morgott
-        60520  // Golden Shade Godfrey
+    /// <summary>
+    /// The three talisman pouches, by the item lot that awards each.
+    ///
+    /// Not by flag. The flags -- 60500 Enia, 60510 Margit/Morgott,
+    /// 60520 Golden Shade Godfrey -- are what the game writes down
+    /// once it has awarded one, and setting them says a thing happened
+    /// rather than making it happen. All three pouches share one item
+    /// id and hold one, so spawning it is no good either.
+    ///
+    /// The award is the operation. `AwardItemsIncludingClients` runs
+    /// the game's own routine, which grants the slot and sets the flag
+    /// itself, the same way Give Starting Flasks is an award and not a
+    /// spawn.
+    /// </summary>
+    public static readonly int[] TalismanPouchLots = [
+        10000,  // Stormveil, Margit
+        10050,  // Enia, for two great runes
+        101100  // Finger Reader Enia, Godfrey
     ];
 
     /// <summary>

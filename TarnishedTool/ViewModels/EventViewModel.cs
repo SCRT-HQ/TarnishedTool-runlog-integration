@@ -483,8 +483,21 @@ namespace TarnishedTool.ViewModels
             }
         }
 
-        private void GiveTalismanPouches() =>
-            _eventService.SetEvents(Event.TalismanPouches, true);
+        /// <summary>
+        /// The three talisman pouches, awarded the way the game awards them.
+        ///
+        /// Setting the flags was the obvious thing and did nothing. A flag is
+        /// the game's note that it already handed one over; writing the note
+        /// does not hand anything over. And all three share one item id and
+        /// hold one, so spawning it is no good either. The award is the
+        /// operation, the way Give Starting Flasks is an award and not a
+        /// spawn -- it grants the slot and writes the flag itself.
+        /// </summary>
+        private void GiveTalismanPouches()
+        {
+            foreach (var lot in Event.TalismanPouchLots)
+                _emevdService.ExecuteEmevdCommand(Emevd.EmevdCommands.AwardItemsIncludingClients(lot));
+        }
 
         private void UnlockMetyr()
         {
