@@ -1,4 +1,4 @@
-//
+﻿//
 
 using System;
 using System.Collections.Generic;
@@ -248,6 +248,13 @@ public sealed class GameOperations
     /// feature in it; these are the ones a game about dice actually wants,
     /// and every one of them is something the player could not have been
     /// in the middle of undoing.
+    ///
+    /// Two gates stand behind a press and they are easy to confuse. This
+    /// one says a source is *allowed* to ask; the hotkey registry says
+    /// the build *has* it. A name registered and not listed here is
+    /// refused with "is not one a source may press", which is what
+    /// happened to every unlock below until they were added: Runlog
+    /// offered them, the tool knew them, and this array did not.
     /// </summary>
     private static readonly HotkeyActions[] Pressable =
     {
@@ -266,6 +273,24 @@ public sealed class GameOperations
         HotkeyActions.RainyWeather,
         HotkeyActions.SnowyWeather,
         HotkeyActions.FoggyWeather,
+
+        // The unlocks. Each hands over something the game would have
+        // made you walk to, and each is the same afterwards however
+        // many times it runs, which is the test above: nothing here is
+        // something a player could be in the middle of undoing.
+        HotkeyActions.UnlockMainGameMaps,
+        HotkeyActions.UnlockDlcMaps,
+        HotkeyActions.UnlockAllMainGameGraces,
+        HotkeyActions.UnlockAllDlcGraces,
+        HotkeyActions.UnlockAllMainRemembrancesGraces,
+        HotkeyActions.UnlockAllDlcRemembrancesGraces,
+        HotkeyActions.UnlockAffinites,
+        HotkeyActions.UnlockGestures,
+        HotkeyActions.UnlockMetyr,
+        HotkeyActions.GiveStartingFlasks,
+        HotkeyActions.GiveTalismanPouches,
+        HotkeyActions.FightFortissax,
+        HotkeyActions.FightEldenBeast,
     };
 
     public void RegisterOn(OperationRegistry registry)

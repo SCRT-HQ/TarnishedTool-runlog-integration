@@ -179,6 +179,7 @@ public enum HotkeyActions
     FullShopLineup,
     UnlockAffinites,
     GiveStartingFlasks,
+    GiveTalismanPouches,
     UnlockGestures,
     FightEldenBeast,
     FightFortissax,

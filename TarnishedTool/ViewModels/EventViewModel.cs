@@ -377,6 +377,7 @@ namespace TarnishedTool.ViewModels
             _hotkeyManager.RegisterAction(HotkeyActions.OpenEventLogger, () => OpenEventLogWindow());
             _hotkeyManager.RegisterAction(HotkeyActions.UnlockAffinites, () => SafeExecute(UnlockWhetblades));
             _hotkeyManager.RegisterAction(HotkeyActions.GiveStartingFlasks, () => SafeExecute(GiveStartingFlasks));
+            _hotkeyManager.RegisterAction(HotkeyActions.GiveTalismanPouches, () => SafeExecute(GiveTalismanPouches));
             _hotkeyManager.RegisterAction(HotkeyActions.UnlockGestures, () => SafeExecute(UnlockAllGesturesInternal));
             _hotkeyManager.RegisterAction(HotkeyActions.FightEldenBeast, () => SafeExecute(FightEldenBeast));
             _hotkeyManager.RegisterAction(HotkeyActions.FightFortissax, () => SafeExecute(FightFortissax));
@@ -440,6 +441,9 @@ namespace TarnishedTool.ViewModels
                 _eventService.SetEvent(whetBlade, true);
             }
         }
+
+        private void GiveTalismanPouches() =>
+            _eventService.SetEvents(Event.TalismanPouches, true);
 
         private void UnlockMetyr()
         {

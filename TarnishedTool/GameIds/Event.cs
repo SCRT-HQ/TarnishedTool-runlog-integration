@@ -13,6 +13,20 @@ public static class Event
         60130 // Whetstone Knife
     ];
 
+    /// <summary>
+    /// The three talisman pouches, by the event that awards each.
+    ///
+    /// Verified in game with the event logger: setting these three is
+    /// the whole of it. The pouch is a key item sharing one id across
+    /// all three, so spawning the item hands over one thing and the
+    /// slots come from the flags.
+    /// </summary>
+    public static readonly long[] TalismanPouches = [
+        60500, // Enia
+        60510, // Margit/Morgott
+        60520  // Golden Shade Godfrey
+    ];
+
     public static readonly long ClearDlc = 70;
     public static readonly long SeeUndergroundGraces = 82001;
     public static readonly long SeeDlcGraces = 82002;
