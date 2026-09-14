@@ -1,4 +1,4 @@
-//
+﻿//
 
 using System;
 using System.Collections.Generic;
@@ -92,12 +92,24 @@ public sealed class Watches
         var flags = new Dictionary<int, string>();
         foreach (var boss in wanted)
         {
-            if (boss.BossFlags == null) continue;
-            // The flag that means dead, not the one that means met: a
-            // first encounter sets its own, and saying "settled" when
-            // somebody walked into the room would be worse than silence.
-            foreach (var flag in boss.BossFlags.Where(f => f.SetValue))
-                flags[flag.EventId] = string.IsNullOrWhiteSpace(boss.Area) ? boss.BossName : boss.BossName + ", " + boss.Area;
+            if (boss.BossFlags == null || boss.BossFlags.Count == 0) continue;
+            // The first of the boss flags, which is the one that means
+            // dead. `SetValue` is what a revive writes, so it is false
+            // on every death flag in the table and filtering for true
+            // selected the handful of flags a revive *sets* instead --
+            // four of them, across three bosses, leaving every other
+            // boss with nothing to watch. `GetBossStatus` reads
+            // `BossFlags[0]` to decide whether a boss is dead; so does
+            // this.
+            //
+            // Only the first. The rest are flags a revive clears
+            // alongside it -- a grace, a map marker -- and a watch that
+            // fired on those would announce a death that had not
+            // happened. The first-encounter flags are excluded for the
+            // same reason: saying "settled" when somebody walked into
+            // the room would be worse than silence.
+            var dead = boss.BossFlags[0];
+            flags[dead.EventId] = string.IsNullOrWhiteSpace(boss.Area) ? boss.BossName : boss.BossName + ", " + boss.Area;
         }
         if (flags.Count == 0) throw new OperationRefused("this build knows no death flags for that");
         return Add(new Watch { Named = flags, Fallback = "a boss" });
