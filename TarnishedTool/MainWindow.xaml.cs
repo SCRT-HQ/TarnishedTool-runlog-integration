@@ -129,6 +129,13 @@ namespace TarnishedTool
                 playerViewModel,enemyViewModel,utilityViewModel, travelViewModel, eventViewModel, itemViewModel,activateOnLaunchManager,_stateService
             );
 
+            ControlViewModel controlViewModel = new ControlViewModel(
+                playerViewModel, enemyViewModel, utilityViewModel, travelViewModel,
+                spEffectService, playerService, travelService, itemService,
+                _memoryService, _stateService, gameTickService, hotkeyManager,
+                eventLogReader
+            );
+
             SettingsViewModel settingsViewModel = new SettingsViewModel(
                 settingsService, hotkeyManager, _stateService, activateOnLaunchViewModel, reminderService
             );
@@ -141,6 +148,7 @@ namespace TarnishedTool
             var itemTab = new ItemTab(itemViewModel);
             var eventTab = new EventTab(eventViewModel);
             var advancedTab = new AdvancedTab(advancedViewModel);
+            var controlTab = new ControlTab(controlViewModel);
             var settingsTab = new SettingsTab(settingsViewModel);
 
 
@@ -152,6 +160,7 @@ namespace TarnishedTool
             MainTabControl.Items.Add(new TabItem { Header = "Event", Content = eventTab });
             MainTabControl.Items.Add(new TabItem { Header = "Items", Content = itemTab });
             MainTabControl.Items.Add(new TabItem { Header = "Advanced", Content = advancedTab });
+            MainTabControl.Items.Add(new TabItem { Header = "Control", Content = controlTab });
             MainTabControl.Items.Add(new TabItem { Header = "Settings", Content = settingsTab });
 
             MainTabControl.SelectionChanged += MainTabControl_SelectionChanged;
@@ -281,6 +290,7 @@ namespace TarnishedTool
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
+            _stateService.Publish(State.AppClosing);
             var bounds = WindowState == WindowState.Normal
                 ? new Rect(Left, Top, ActualWidth, ActualHeight)
                 : RestoreBounds;

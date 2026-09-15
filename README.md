@@ -10,6 +10,18 @@
 [![Report Issues](https://img.shields.io/github/issues/borgCode/TarnishedTool.svg)](https://github.com/borgCode/TarnishedTool/issues)
 [![Nexusmods Page](https://img.shields.io/badge/Nexusmods_Page-orange)](https://www.nexusmods.com/eldenring/mods/9277)
 
+## This fork: a Control tab
+
+This is a fork of [borgCode/TarnishedTool](https://github.com/borgCode/TarnishedTool) with one addition: a Control tab, which connects the tool to a WebSocket server you name, so something outside the game can change it while you play. Streamer.bot, so your chat and channel point redeems reach the game. A [Runlog](https://runlog.scrthq.com) run, so the dice on the table take your dodge away or move you across the map. Or anything of your own that can hold a socket open.
+
+Nothing in the tab names any particular service. It dials the address you paste in, says what it can do, performs what comes back, and puts everything back afterwards. What a source may do is yours to decide, operation by operation, in the tab; warps, items and button presses start switched off.
+
+[docs/controlling.md](docs/controlling.md) is how to drive it from something of your own. It includes a working controller short enough to read.
+
+Everything upstream says about offline use goes double here. An address in a tab makes this feel like a service, and it is not one.
+
+Work lives on the `integration` branch; `master` tracks upstream unchanged.
+
 **This tool is strictly for offline use only, it directly manipulates game memory which violates the Terms of Service and will most likely lead to a ban if you use this online.**
 
 *Whenever specific features that could potentially be used for cheating in challenge runs are enabled, the loading screen title in game will change until the game is exited.*

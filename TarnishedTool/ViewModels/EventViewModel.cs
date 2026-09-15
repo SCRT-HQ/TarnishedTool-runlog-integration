@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -376,6 +376,10 @@ namespace TarnishedTool.ViewModels
                 () => IsDisableEventsEnabled = !IsDisableEventsEnabled);
             _hotkeyManager.RegisterAction(HotkeyActions.OpenEventLogger, () => OpenEventLogWindow());
             _hotkeyManager.RegisterAction(HotkeyActions.UnlockAffinites, () => SafeExecute(UnlockWhetblades));
+            _hotkeyManager.RegisterAction(HotkeyActions.GiveStartingFlasks, () => SafeExecute(GiveStartingFlasks));
+            _hotkeyManager.RegisterAction(HotkeyActions.GiveTalismanPouches, () => SafeExecute(GiveTalismanPouches));
+            _hotkeyManager.RegisterAction(HotkeyActions.GiveStartingGifts, () => SafeExecute(GiveStartingGifts));
+            _hotkeyManager.RegisterAction(HotkeyActions.GiveGreatRunes, () => SafeExecute(GiveGreatRunes));
             _hotkeyManager.RegisterAction(HotkeyActions.UnlockGestures, () => SafeExecute(UnlockAllGesturesInternal));
             _hotkeyManager.RegisterAction(HotkeyActions.FightEldenBeast, () => SafeExecute(FightEldenBeast));
             _hotkeyManager.RegisterAction(HotkeyActions.FightFortissax, () => SafeExecute(FightFortissax));
@@ -438,6 +442,61 @@ namespace TarnishedTool.ViewModels
             {
                 _eventService.SetEvent(whetBlade, true);
             }
+        }
+
+        /// <summary>
+        /// The gifts the opening hours hand over: Torrent's whistle, the
+        /// Spirit Calling Bell, the crafting kit, the tailoring tools and
+        /// the Physick flask.
+        ///
+        /// Item and event both, because they do different work: the event
+        /// stops the game awarding it again and tells the menus the thing
+        /// exists, the item is what gets used. Spawned the way
+        /// `UnlockWhetblades` spawns its knife.
+        /// </summary>
+        private void GiveStartingGifts()
+        {
+            // Leveling is not a gift with an item behind it: it is
+            // Melina's accord and nothing more.
+            _eventService.SetEvent(Event.MelinasAccord, true);
+
+            foreach (var (item, flag) in Event.StartingGifts)
+            {
+                _itemService.SpawnItem(item, 1, -1, false, 1);
+                _eventService.SetEvent(flag, true);
+            }
+        }
+
+        /// <summary>
+        /// The great runes, restored, and a handful of arcs to spend.
+        ///
+        /// Item and event both, as the starting gifts are: the rune is
+        /// a thing you equip and the event is what the game reads to
+        /// know it was restored.
+        /// </summary>
+        private void GiveGreatRunes()
+        {
+            foreach (var (item, flag) in Event.GreatRunes)
+            {
+                _itemService.SpawnItem(item, 1, -1, false, 1);
+                _eventService.SetEvent(flag, true);
+            }
+        }
+
+        /// <summary>
+        /// The three talisman pouches, awarded the way the game awards them.
+        ///
+        /// Setting the flags was the obvious thing and did nothing. A flag is
+        /// the game's note that it already handed one over; writing the note
+        /// does not hand anything over. And all three share one item id and
+        /// hold one, so spawning it is no good either. The award is the
+        /// operation, the way Give Starting Flasks is an award and not a
+        /// spawn -- it grants the slot and writes the flag itself.
+        /// </summary>
+        private void GiveTalismanPouches()
+        {
+            foreach (var lot in Event.TalismanPouchLots)
+                _emevdService.ExecuteEmevdCommand(Emevd.EmevdCommands.AwardItemsIncludingClients(lot));
         }
 
         private void UnlockMetyr()

@@ -1,0 +1,134 @@
+<UserControl x:Class="TarnishedTool.Views.Tabs.ControlTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="720" d:DesignWidth="600">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="160" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock TextWrapping="Wrap"
+                       Text="Connect to a WebSocket server and let it change the game while you play: Streamer.bot for your chat and channel points, a Runlog run for the dice at the table, or anything of your own." />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Address" VerticalAlignment="Center" />
+            <TextBox Grid.Row="0" Grid.Column="1"
+                     Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,0,8,4" />
+            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Margin="0,0,0,4">
+                <Button Content="Connect" Command="{Binding ConnectCommand}" Width="90" Margin="0,0,4,0" />
+                <Button Content="Disconnect" Command="{Binding DisconnectCommand}" Width="90" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <CheckBox Content="Connect on start"
+                          IsChecked="{Binding ConnectOnStart}"
+                          VerticalAlignment="Center"
+                          Margin="0,0,12,0" />
+                <CheckBox Content="Say when I die"
+                          IsChecked="{Binding TellsOfDeath}"
+                          VerticalAlignment="Center"
+                          ToolTip="Tells whatever is connected that you died, on the same socket. It is a mention: what happens about it is the other end's business." />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Status: " />
+            <TextBlock Text="{Binding Status}" FontWeight="Bold" Margin="0,0,16,0" />
+            <TextBlock Text="In force: " />
+            <TextBlock Text="{Binding LiveCount}" FontWeight="Bold" Margin="0,0,16,0" />
+            <Button Content="Take everything off"
+                    Command="{Binding TakeEverythingOffCommand}"
+                    Width="140" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="3" Text="What a source may do here" Margin="0,0,0,5" />
+        <ListBox Grid.Row="4"
+                 Margin="0,0,0,10"
+                 ItemsSource="{Binding Operations}"
+                 BorderThickness="1"
+                 BorderBrush="#333"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Border Background="Transparent" Padding="8,3">
+                                    <ContentPresenter />
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsAllowed}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <DockPanel Grid.Row="5" Margin="0,0,0,5" LastChildFill="False">
+            <TextBlock Text="What happened" VerticalAlignment="Center" DockPanel.Dock="Left" />
+            <ComboBox DockPanel.Dock="Right"
+                      Width="110"
+                      VerticalAlignment="Center"
+                      ToolTip="How much this pane says. Trouble only, the usual, or every operation with its arguments while you are working out a profile."
+                      ItemsSource="{Binding Chatters}"
+                      SelectedItem="{Binding Chatter, Mode=TwoWay}" />
+            <TextBlock DockPanel.Dock="Right"
+                       Text="Say"
+                       VerticalAlignment="Center"
+                       Margin="0,0,6,0"
+                       Foreground="#999" />
+        </DockPanel>
+
+        <ListBox Grid.Row="6"
+                 ItemsSource="{Binding Log}"
+                 BorderThickness="1"
+                 BorderBrush="#333"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Border Background="Transparent" Padding="6,2">
+                                    <ContentPresenter />
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>

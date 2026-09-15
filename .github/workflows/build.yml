@@ -1,0 +1,192 @@
+# Build the tool, check the protocol, and publish what was built, once
+# somebody says so.
+#
+# The build runs on every push and pull request and produces the one file
+# anybody downloads. The release is a separate job that follows a green
+# build on a pull request, or a manual dispatch that asks for one, and
+# then waits: it names an environment with a required reviewer, and
+# nothing is tagged or published until that reviewer approves the run.
+# Approved, it publishes a beta named for the upstream version it was
+# built on and the minute it was built. See .github/workflows/README.md.
+name: Build
+
+on:
+  push:
+    branches: [integration, master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Cut a release from this build
+        type: boolean
+        default: false
+      tag:
+        description: "Tag for the release, e.g. v1.2.1-control.1. Left empty, the beta name is used."
+        type: string
+      notes:
+        description: What changed, in a line or two
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+    timeout-minutes: 20
+    outputs:
+      artifact: ${{ steps.name.outputs.artifact }}
+      stamp: ${{ steps.name.outputs.stamp }}
+    steps:
+      # On a pull request, build the commit itself rather than GitHub's
+      # preview merge of it into the base branch: what a release tags has
+      # to be the commit the executable was built from, and the preview
+      # merge is on no branch and tagged by nobody.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      # Every artifact downloads as a zip named after itself, so a fixed
+      # name leaves a folder of TarnishedTool (1).zip through (9) with
+      # nothing to tell them apart. The minute it was built does that.
+      - name: Name this build
+        id: name
+        shell: pwsh
+        run: |
+          # UTC, said out loud, because a runner is always UTC and a
+          # build made in the evening otherwise downloads dated tomorrow.
+          $stamp = [datetime]::UtcNow.ToString("yyyyMMdd-HHmm")
+          "stamp=$stamp" >> $env:GITHUB_OUTPUT
+          "artifact=TarnishedTool-${stamp}Z" >> $env:GITHUB_OUTPUT
+          Write-Host "This build downloads as TarnishedTool-${stamp}Z.zip"
+
+      - uses: microsoft/setup-msbuild@v3
+      - uses: NuGet/setup-nuget@v4
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      # packages.config rather than PackageReference, so restoring is
+      # nuget's job and not msbuild's.
+      - name: Restore
+        run: nuget restore TarnishedTool.sln
+
+      - name: Build
+        run: msbuild TarnishedTool.sln -t:build -p:Configuration=Release -m -v:minimal
+
+      # The only part of the tool that can be checked on a machine with no
+      # copy of the game: the wire format, and the registry that reads it.
+      - name: Check the protocol
+        run: dotnet run --project tests/ProtocolChecks.csproj -c Release
+
+      # Costura packs every dependency into the executable. If that ever
+      # stops happening the download quietly becomes one that does not run
+      # on anybody else's machine, and the size is what says so.
+      - name: One file, and a plausible one
+        shell: pwsh
+        run: |
+          $exe = "TarnishedTool/bin/Release/TarnishedTool.exe"
+          if (-not (Test-Path $exe)) { throw "no executable was produced" }
+          $mb = [math]::Round((Get-Item $exe).Length / 1MB, 2)
+          Write-Host "TarnishedTool.exe is $mb MB"
+          if ($mb -lt 4) { throw "$mb MB is too small: the dependencies are probably not packed in" }
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.name.outputs.artifact }}
+          path: TarnishedTool/bin/Release/TarnishedTool.exe
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Release
+    needs: build
+    # A pull request from a fork gets a token that cannot publish, so it
+    # is not offered a release; a pull request from this repository is.
+    if: >-
+      ${{ (github.event_name == 'pull_request'
+           && github.event.pull_request.head.repo.full_name == github.repository)
+          || (github.event_name == 'workflow_dispatch' && inputs.release) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The gate. A reviewer on this environment approves before anything is
+    # tagged or published; until then the job waits, and shows as waiting
+    # in the checks on the commit.
+    environment: release
+    # One release waits per pull request. A newer push to it cancels the
+    # one nobody had approved yet, instead of leaving it for thirty days.
+    concurrency:
+      group: release-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: true
+    permissions:
+      contents: write
+    steps:
+      # The whole history, because the name of a beta comes from where
+      # this commit meets upstream, and a shallow clone cannot say.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      # A beta is named for the upstream release it was built on and the
+      # minute it was built: v1.2.1-runlog-beta-20260915-0714, UTC. The
+      # upstream release is the newest upstream tag reachable from where
+      # this commit and upstream's master meet, so the name moves on its
+      # own when the branch is rebased onto a newer upstream.
+      #
+      # Everything somebody typed into the dispatch form reaches these
+      # steps as an environment variable rather than being pasted into the
+      # script. An expression is substituted before the shell sees the
+      # line, so a tag or a note could otherwise carry anything it liked.
+      - name: Name the release
+        id: name
+        env:
+          TAG: ${{ inputs.tag }}
+          STAMP: ${{ needs.build.outputs.stamp }}
+          UPSTREAM: https://github.com/borgCode/TarnishedTool.git
+        run: |
+          git fetch --quiet "$UPSTREAM" 'refs/tags/*:refs/tags/*' '+master:refs/remotes/upstream/master'
+          base=$(git merge-base HEAD refs/remotes/upstream/master)
+          upstream=$(git describe --tags --abbrev=0 "$base")
+          echo "upstream=$upstream" >> "$GITHUB_OUTPUT"
+          if [ -n "$TAG" ]; then
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "prerelease=" >> "$GITHUB_OUTPUT"
+            echo "Releasing as $TAG, as asked, on upstream $upstream"
+          else
+            echo "tag=$upstream-runlog-beta-$STAMP" >> "$GITHUB_OUTPUT"
+            echo "prerelease=--prerelease" >> "$GITHUB_OUTPUT"
+            echo "Releasing as $upstream-runlog-beta-$STAMP"
+          fi
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.build.outputs.artifact }}
+          path: out
+
+      # A beta is a prerelease, so GitHub never calls one "latest" once a
+      # real release exists. A tag given by hand publishes in full.
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.name.outputs.tag }}
+          PRERELEASE: ${{ steps.name.outputs.prerelease }}
+          UPSTREAM: ${{ steps.name.outputs.upstream }}
+          NOTES: ${{ inputs.notes }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if [ -n "$NOTES" ]; then printf '%s\n\n' "$NOTES" > notes.md; else : > notes.md; fi
+          {
+            printf 'Built from `%s` on `%s`, on upstream %s.\n\n' "$SHA" "$REF" "$UPSTREAM"
+            printf 'A fork of [borgCode/TarnishedTool](https://github.com/borgCode/TarnishedTool) with a Control tab added. Everything upstream says about offline use applies here: the game goes offline, or you get banned.\n\n'
+            printf 'Driving it from something of your own: [docs/controlling.md](https://github.com/%s/blob/%s/docs/controlling.md).\n' "$REPO" "$SHA"
+          } >> notes.md
+          gh release create "$TAG" out/TarnishedTool.exe \
+            --repo "$REPO" \
+            --target "$SHA" \
+            --title "$TAG" \
+            --notes-file notes.md \
+            $PRERELEASE
