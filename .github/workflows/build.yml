@@ -3,11 +3,11 @@
 #
 # The build runs on every push and pull request and produces the one file
 # anybody downloads. The release is a separate job that follows a green
-# build of `integration`, or a manual dispatch that asks for one, and then
-# waits: it names an environment with a required reviewer, and nothing is
-# tagged or published until that reviewer approves the run. Approved, it
-# publishes a beta named for the upstream version it was built on and the
-# minute it was built. See .github/workflows/README.md.
+# build on a pull request, or a manual dispatch that asks for one, and
+# then waits: it names an environment with a required reviewer, and
+# nothing is tagged or published until that reviewer approves the run.
+# Approved, it publishes a beta named for the upstream version it was
+# built on and the minute it was built. See .github/workflows/README.md.
 name: Build
 
 on:
@@ -39,7 +39,13 @@ jobs:
       artifact: ${{ steps.name.outputs.artifact }}
       stamp: ${{ steps.name.outputs.stamp }}
     steps:
+      # On a pull request, build the commit itself rather than GitHub's
+      # preview merge of it into the base branch: what a release tags has
+      # to be the commit the executable was built from, and the preview
+      # merge is on no branch and tagged by nobody.
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       # Every artifact downloads as a zip named after itself, so a fixed
       # name leaves a folder of TarnishedTool (1).zip through (9) with
@@ -96,8 +102,11 @@ jobs:
   release:
     name: Release
     needs: build
+    # A pull request from a fork gets a token that cannot publish, so it
+    # is not offered a release; a pull request from this repository is.
     if: >-
-      ${{ (github.event_name == 'push' && github.ref == 'refs/heads/integration')
+      ${{ (github.event_name == 'pull_request'
+           && github.event.pull_request.head.repo.full_name == github.repository)
           || (github.event_name == 'workflow_dispatch' && inputs.release) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -105,10 +114,10 @@ jobs:
     # tagged or published; until then the job waits, and shows as waiting
     # in the checks on the commit.
     environment: release
-    # Only one release waits at a time. A newer push cancels the one
-    # nobody had approved yet, instead of leaving it for thirty days.
+    # One release waits per pull request. A newer push to it cancels the
+    # one nobody had approved yet, instead of leaving it for thirty days.
     concurrency:
-      group: release
+      group: release-${{ github.event.pull_request.number || github.run_id }}
       cancel-in-progress: true
     permissions:
       contents: write
@@ -117,6 +126,7 @@ jobs:
       # this commit meets upstream, and a shallow clone cannot say.
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
       # A beta is named for the upstream release it was built on and the
@@ -165,8 +175,8 @@ jobs:
           UPSTREAM: ${{ steps.name.outputs.upstream }}
           NOTES: ${{ inputs.notes }}
           REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
-          REF: ${{ github.ref_name }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          REF: ${{ github.head_ref || github.ref_name }}
         run: |
           if [ -n "$NOTES" ]; then printf '%s\n\n' "$NOTES" > notes.md; else : > notes.md; fi
           {

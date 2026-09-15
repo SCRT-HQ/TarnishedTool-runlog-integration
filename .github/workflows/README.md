@@ -1,16 +1,16 @@
 # The build, and publishing a release
 
-`build.yml` does two things. The first happens on every push and pull request; the second is offered after every push to `integration`, and by hand, and happens when somebody approves it.
+`build.yml` does two things. The first happens on every push and pull request; the second is offered on every pull request, and by hand, and happens when somebody approves it.
 
 ## Every push
 
-Restore, build the solution, run the protocol checks, and upload `TarnishedTool.exe` as an artifact you can download from the run. The artifact carries the minute it was built, `TarnishedTool-20260913-0316Z`, in UTC, because every artifact downloads as a zip named after itself and a folder of `TarnishedTool (4).zip` says nothing about which build is which. The checks are `tests/ProtocolChecks.csproj`, which links the two files in the control layer that know nothing about the game and asserts what goes over the wire; they are the only thing here that can be tested without a copy of Elden Ring.
+Restore, build the solution, run the protocol checks, and upload `TarnishedTool.exe` as an artifact you can download from the run. On a pull request the commit itself is built, not GitHub's preview merge of it into the base branch, because what a release tags must be the commit its executable came from. The artifact carries the minute it was built, `TarnishedTool-20260913-0316Z`, in UTC, because every artifact downloads as a zip named after itself and a folder of `TarnishedTool (4).zip` says nothing about which build is which. The checks are `tests/ProtocolChecks.csproj`, which links the two files in the control layer that know nothing about the game and asserts what goes over the wire; they are the only thing here that can be tested without a copy of Elden Ring.
 
 The build also fails if the executable comes out under four megabytes, which is what a Costura build that stopped packing its dependencies looks like. That would otherwise ship as a download that runs on the machine that built it and nowhere else.
 
-## Every push to `integration`: a beta, on approval
+## Every pull request: a beta, on approval
 
-Artifacts can only be downloaded by somebody signed in to GitHub, so a green build of `integration` offers a prerelease that anybody can download from the Releases page. The Release job waits for a reviewer; it shows as waiting among the checks on the commit, and on the pull request that carries it. Open the run, **Review deployments**, approve, and the release is published. Reject it, or leave it, and nothing is. A newer push to `integration` cancels a release still waiting, so only the latest build is ever on offer.
+Artifacts can only be downloaded by somebody signed in to GitHub, so a green build on a pull request offers a prerelease that anybody can download from the Releases page. The Release job waits for a reviewer, and shows as waiting among the pull request's checks. Open the run, **Review deployments**, approve, and the release is published. Reject it, or leave it, and nothing is. A newer push to the pull request cancels a release still waiting, so only its latest build is ever on offer. A pull request from a fork is not offered one: its token cannot publish.
 
 A beta is named for the upstream release it was built on and the minute it was built:
 
