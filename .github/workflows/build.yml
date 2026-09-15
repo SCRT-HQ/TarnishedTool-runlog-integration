@@ -1,11 +1,13 @@
-# Build the tool, check the protocol, and cut a release when asked.
+# Build the tool, check the protocol, and publish what was built.
 #
 # The build runs on every push and pull request and produces the one file
-# anybody downloads. The release is a separate job that only runs when
-# somebody asks for it by hand, and it names an environment, so a reviewer
-# on that environment approves before a tag or a download appears. With no
-# reviewers configured on the environment there is no gate at all; see
-# .github/workflows/README.md.
+# anybody downloads. The release is a separate job that runs after a green
+# build of `integration`, publishing a beta named for the upstream version
+# it was built on and the minute it was built, and on a manual dispatch
+# that asks for one. It names an environment, so a reviewer on that
+# environment can be made to approve before a tag or a download appears.
+# With no reviewers configured on the environment there is no gate at all;
+# see .github/workflows/README.md.
 name: Build
 
 on:
@@ -19,7 +21,7 @@ on:
         type: boolean
         default: false
       tag:
-        description: "Tag for the release, e.g. v1.2.1-control.1"
+        description: "Tag for the release, e.g. v1.2.1-control.1. Left empty, the beta name is used."
         type: string
       notes:
         description: What changed, in a line or two
@@ -35,6 +37,7 @@ jobs:
     timeout-minutes: 20
     outputs:
       artifact: ${{ steps.name.outputs.artifact }}
+      stamp: ${{ steps.name.outputs.stamp }}
     steps:
       - uses: actions/checkout@v7
 
@@ -47,9 +50,10 @@ jobs:
         run: |
           # UTC, said out loud, because a runner is always UTC and a
           # build made in the evening otherwise downloads dated tomorrow.
-          $stamp = [datetime]::UtcNow.ToString("yyyyMMdd-HHmm") + "Z"
-          "artifact=TarnishedTool-$stamp" >> $env:GITHUB_OUTPUT
-          Write-Host "This build downloads as TarnishedTool-$stamp.zip"
+          $stamp = [datetime]::UtcNow.ToString("yyyyMMdd-HHmm")
+          "stamp=$stamp" >> $env:GITHUB_OUTPUT
+          "artifact=TarnishedTool-${stamp}Z" >> $env:GITHUB_OUTPUT
+          Write-Host "This build downloads as TarnishedTool-${stamp}Z.zip"
 
       - uses: microsoft/setup-msbuild@v3
       - uses: NuGet/setup-nuget@v4
@@ -92,7 +96,9 @@ jobs:
   release:
     name: Release
     needs: build
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.release }}
+    if: >-
+      ${{ (github.event_name == 'push' && github.ref == 'refs/heads/integration')
+          || (github.event_name == 'workflow_dispatch' && inputs.release) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # The gate. A reviewer on this environment approves before anything is
@@ -101,19 +107,41 @@ jobs:
     permissions:
       contents: write
     steps:
+      # The whole history, because the name of a beta comes from where
+      # this commit meets upstream, and a shallow clone cannot say.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
+      # A beta is named for the upstream release it was built on and the
+      # minute it was built: v1.2.1-runlog-beta-20260915-0714, UTC. The
+      # upstream release is the newest upstream tag reachable from where
+      # this commit and upstream's master meet, so the name moves on its
+      # own when the branch is rebased onto a newer upstream.
+      #
       # Everything somebody typed into the dispatch form reaches these
       # steps as an environment variable rather than being pasted into the
       # script. An expression is substituted before the shell sees the
       # line, so a tag or a note could otherwise carry anything it liked.
-      - name: A tag is required
+      - name: Name the release
+        id: name
         env:
           TAG: ${{ inputs.tag }}
+          STAMP: ${{ needs.build.outputs.stamp }}
+          UPSTREAM: https://github.com/borgCode/TarnishedTool.git
         run: |
-          if [ -z "$TAG" ]; then
-            echo "Give a tag when asking for a release, such as v1.2.1-control.1." >&2
-            exit 1
+          git fetch --quiet "$UPSTREAM" 'refs/tags/*:refs/tags/*' '+master:refs/remotes/upstream/master'
+          base=$(git merge-base HEAD refs/remotes/upstream/master)
+          upstream=$(git describe --tags --abbrev=0 "$base")
+          echo "upstream=$upstream" >> "$GITHUB_OUTPUT"
+          if [ -n "$TAG" ]; then
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "prerelease=" >> "$GITHUB_OUTPUT"
+            echo "Releasing as $TAG, as asked, on upstream $upstream"
+          else
+            echo "tag=$upstream-runlog-beta-$STAMP" >> "$GITHUB_OUTPUT"
+            echo "prerelease=--prerelease" >> "$GITHUB_OUTPUT"
+            echo "Releasing as $upstream-runlog-beta-$STAMP"
           fi
 
       - uses: actions/download-artifact@v8
@@ -121,18 +149,22 @@ jobs:
           name: ${{ needs.build.outputs.artifact }}
           path: out
 
+      # A beta is a prerelease, so GitHub never calls one "latest" once a
+      # real release exists. A tag given by hand publishes in full.
       - name: Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ steps.name.outputs.tag }}
+          PRERELEASE: ${{ steps.name.outputs.prerelease }}
+          UPSTREAM: ${{ steps.name.outputs.upstream }}
           NOTES: ${{ inputs.notes }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
           REF: ${{ github.ref_name }}
         run: |
-          printf '%s\n\n' "$NOTES" > notes.md
+          if [ -n "$NOTES" ]; then printf '%s\n\n' "$NOTES" > notes.md; else : > notes.md; fi
           {
-            printf 'Built from `%s` on `%s`.\n\n' "$SHA" "$REF"
+            printf 'Built from `%s` on `%s`, on upstream %s.\n\n' "$SHA" "$REF" "$UPSTREAM"
             printf 'A fork of [borgCode/TarnishedTool](https://github.com/borgCode/TarnishedTool) with a Control tab added. Everything upstream says about offline use applies here: the game goes offline, or you get banned.\n\n'
             printf 'Driving it from something of your own: [docs/controlling.md](https://github.com/%s/blob/%s/docs/controlling.md).\n' "$REPO" "$SHA"
           } >> notes.md
@@ -140,4 +172,5 @@ jobs:
             --repo "$REPO" \
             --target "$SHA" \
             --title "$TAG" \
-            --notes-file notes.md
+            --notes-file notes.md \
+            $PRERELEASE
