@@ -26,7 +26,7 @@ Actions → Build → Run workflow, tick **Cut a release from this build**, and 
 
 ## The gate
 
-The release job names an environment called `release`, and the gate is whatever that environment is configured to require, under Settings → Environments → `release`. As set up, it has a **required reviewer** and its **deployment branches** are limited to `integration`, so a release cannot be approved from a branch nobody has looked at. A workflow naming an environment is not by itself a gate: GitHub creates one on first use with no protection at all, and if the environment is ever deleted and recreated, every push would publish unasked until it is configured again.
+The release job names an environment called `release`, and the gate is whatever that environment is configured to require, under Settings → Environments → `release`. As set up, it has a **required reviewer**, and that is the whole gate. It cannot also limit deployment branches: on a pull request GitHub checks the ref `refs/pull/N/merge` against that list, which no branch pattern matches, and the job fails before it can wait. So a release can be offered from any branch, by hand or by pull request, and the reviewer is the one who looks. A workflow naming an environment is not by itself a gate: GitHub creates one on first use with no protection at all, and if the environment is ever deleted and recreated, every pull request would publish unasked until it is configured again.
 
 ## What a release contains
 
