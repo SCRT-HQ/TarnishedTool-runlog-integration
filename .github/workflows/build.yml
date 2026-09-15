@@ -1,13 +1,13 @@
-# Build the tool, check the protocol, and publish what was built.
+# Build the tool, check the protocol, and publish what was built, once
+# somebody says so.
 #
 # The build runs on every push and pull request and produces the one file
-# anybody downloads. The release is a separate job that runs after a green
-# build of `integration`, publishing a beta named for the upstream version
-# it was built on and the minute it was built, and on a manual dispatch
-# that asks for one. It names an environment, so a reviewer on that
-# environment can be made to approve before a tag or a download appears.
-# With no reviewers configured on the environment there is no gate at all;
-# see .github/workflows/README.md.
+# anybody downloads. The release is a separate job that follows a green
+# build of `integration`, or a manual dispatch that asks for one, and then
+# waits: it names an environment with a required reviewer, and nothing is
+# tagged or published until that reviewer approves the run. Approved, it
+# publishes a beta named for the upstream version it was built on and the
+# minute it was built. See .github/workflows/README.md.
 name: Build
 
 on:
@@ -102,8 +102,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # The gate. A reviewer on this environment approves before anything is
-    # tagged or published.
+    # tagged or published; until then the job waits, and shows as waiting
+    # in the checks on the commit.
     environment: release
+    # Only one release waits at a time. A newer push cancels the one
+    # nobody had approved yet, instead of leaving it for thirty days.
+    concurrency:
+      group: release
+      cancel-in-progress: true
     permissions:
       contents: write
     steps:
