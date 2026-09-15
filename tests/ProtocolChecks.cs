@@ -65,9 +65,10 @@ static class Check
         Is("unknown frame", Frames.Read("{\"t\":\"teleport\",\"whither\":\"elsewhere\"}").Kind, "unknown");
 
         // What we send.
-        var hello = Frames.Hello("1.4.2", "mira", "ELDEN RING", "attached", new[] { "flag.set", "speffect.apply" });
-        Is("hello", hello, "{\"t\":\"hello\",\"protocol\":1,\"app\":\"TarnishedTool\",\"version\":\"1.4.2\",\"seat\":\"mira\",\"game\":{\"title\":\"ELDEN RING\",\"patch\":\"attached\"},\"ops\":[\"flag.set\",\"speffect.apply\"]}");
-        Is("hello without a seat", Frames.Hello("1", "", "G", "p", new string[0]).Contains("seat"), false);
+        var hello = Frames.Hello("1.4.2", "ELDEN RING", "attached", new[] { "flag.set", "speffect.apply" });
+        Is("hello", hello, "{\"t\":\"hello\",\"protocol\":1,\"app\":\"TarnishedTool\",\"version\":\"1.4.2\",\"game\":{\"title\":\"ELDEN RING\",\"patch\":\"attached\"},\"ops\":[\"flag.set\",\"speffect.apply\"]}");
+        // The seat is the far end's word, taken from the address; the hello never carries one.
+        Is("hello carries no seat", hello.Contains("seat"), false);
         Is("applied", Frames.Applied("a91f", true, new DateTime(2026, 9, 12, 21, 41, 7, DateTimeKind.Utc), null), "{\"t\":\"applied\",\"id\":\"a91f\",\"ok\":true,\"until\":\"2026-09-12T21:41:07Z\"}");
         Is("refused", Frames.Applied("a91f", false, null, "no such flag"), "{\"t\":\"applied\",\"id\":\"a91f\",\"ok\":false,\"error\":\"no such flag\"}");
 
