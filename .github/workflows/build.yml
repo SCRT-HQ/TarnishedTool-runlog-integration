@@ -160,6 +160,51 @@ jobs:
             echo "Releasing as $upstream-runlog-beta-$STAMP"
           fi
 
+      # The notes carry what changed since the release before this one,
+      # so nobody has to open the compare page to know whether to update.
+      - name: What changed since the last release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          FULL: ${{ inputs.tag != '' }}
+          UPSTREAM: ${{ steps.name.outputs.upstream }}
+        run: |
+          # The release before this one: the newest of any kind for a beta,
+          # and the newest full one for a full release, so that a release's
+          # notes span the betas that came between it and the last. A tag
+          # given by hand is what makes a release full; see the step above.
+          if [ "$FULL" = "true" ]; then keep='map(select(.isPrerelease | not))'; else keep='.'; fi
+          prev=$(gh release list --repo "$REPO" --exclude-drafts --limit 100 \
+            --json tagName,isPrerelease,createdAt \
+            --jq "$keep | sort_by(.createdAt) | reverse | .[0].tagName // empty")
+
+          # What is listed is what this commit has that the previous release
+          # did not: from where the two histories meet, so a release cut from
+          # another branch is compared honestly rather than from its own tip.
+          # With no previous release, or one whose tag is gone, everything the
+          # fork adds to the upstream it was built on.
+          if [ -n "$prev" ] && git fetch --quiet origin "refs/tags/$prev:refs/tags/$prev"; then
+            from=$(git merge-base "refs/tags/$prev" HEAD)
+            heading="Since [$prev](https://github.com/$REPO/releases/tag/$prev)"
+            compare="https://github.com/$REPO/compare/$prev...$SHA"
+          else
+            from=$(git merge-base HEAD refs/remotes/upstream/master)
+            heading="Everything this fork adds to upstream $UPSTREAM"
+            compare="https://github.com/$REPO/compare/$UPSTREAM...$SHA"
+          fi
+
+          {
+            printf '## %s\n\n' "$heading"
+            if [ "$(git rev-list --count --no-merges "$from..HEAD")" = "0" ]; then
+              printf -- '- Nothing: this is the same commit, built again.\n'
+            else
+              git log --no-merges --reverse --format='- %s (%h)' "$from..HEAD"
+            fi
+            printf '\n[Compare](%s)\n\n' "$compare"
+          } > changes.md
+          cat changes.md
+
       - uses: actions/download-artifact@v8
         with:
           name: ${{ needs.build.outputs.artifact }}
@@ -181,6 +226,7 @@ jobs:
           if [ -n "$NOTES" ]; then printf '%s\n\n' "$NOTES" > notes.md; else : > notes.md; fi
           {
             printf 'Built from `%s` on `%s`, on upstream %s.\n\n' "$SHA" "$REF" "$UPSTREAM"
+            cat changes.md
             printf 'A fork of [borgCode/TarnishedTool](https://github.com/borgCode/TarnishedTool) with a Control tab added. Everything upstream says about offline use applies here: the game goes offline, or you get banned.\n\n'
             printf 'Driving it from something of your own: [docs/controlling.md](https://github.com/%s/blob/%s/docs/controlling.md).\n' "$REPO" "$SHA"
           } >> notes.md

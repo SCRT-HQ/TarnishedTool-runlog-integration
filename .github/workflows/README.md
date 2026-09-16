@@ -30,6 +30,8 @@ The release job names an environment called `release`, and the gate is whatever 
 
 ## What a release contains
 
-The one file, the tag as the title, whatever was typed in the notes box, and a pointer back to the commit, the upstream version, and `docs/controlling.md`.
+The one file, the tag as the title, whatever was typed in the notes box, a pointer back to the commit and the upstream version, what changed, and a link to `docs/controlling.md`.
+
+What changed is the list of commits this one has that the previous release did not, oldest first, with a compare link. For a beta the previous release is the newest of any kind; for a full release it is the newest full one, so its notes span the betas between. The two are compared from where their histories meet, so a release cut from another branch lists only its own commits. With no previous release, or one whose tag has since been deleted, the list is everything the fork adds to the upstream it was built on. The same commit released twice says so instead of listing nothing.
 
 Anything typed into that form reaches the script as an environment variable rather than being pasted into it. An expression is substituted before the shell sees the line, so a release note could otherwise carry anything it liked.
