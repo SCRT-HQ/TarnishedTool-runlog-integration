@@ -57,6 +57,17 @@
                     Background="Transparent"
                     BorderBrush="{StaticResource BorderBrush}"
                     BorderThickness="1">
+            <!--
+                Ten tabs at the shared padding are five pixels wider than
+                the window, and a tab strip that wraps stretches every tab
+                and takes a second row from every pane. Two pixels less a
+                side keeps the row, here and not in the shared style.
+            -->
+            <TabControl.ItemContainerStyle>
+                <Style TargetType="TabItem" BasedOn="{StaticResource {x:Type TabItem}}">
+                    <Setter Property="Padding" Value="8,5" />
+                </Style>
+            </TabControl.ItemContainerStyle>
             <TabControl.Template>
                 <ControlTemplate TargetType="TabControl">
                     <DockPanel>

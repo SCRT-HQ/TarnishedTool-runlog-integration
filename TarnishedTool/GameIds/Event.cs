@@ -13,6 +13,87 @@ public static class Event
         60130 // Whetstone Knife
     ];
 
+    /// <summary>
+    /// The three talisman pouches, by the event that awards each.
+    ///
+    /// Verified in game with the event logger: setting these three is
+    /// the whole of it. The pouch is a key item sharing one id across
+    /// all three, so spawning the item hands over one thing and the
+    /// slots come from the flags.
+    /// </summary>
+    /// <summary>
+    /// The three talisman pouches, by the item lot that awards each.
+    ///
+    /// Not by flag. The flags -- 60500 Enia, 60510 Margit/Morgott,
+    /// 60520 Golden Shade Godfrey -- are what the game writes down
+    /// once it has awarded one, and setting them says a thing happened
+    /// rather than making it happen. All three pouches share one item
+    /// id and hold one, so spawning it is no good either.
+    ///
+    /// The award is the operation. `AwardItemsIncludingClients` runs
+    /// the game's own routine, which grants the slot and sets the flag
+    /// itself, the same way Give Starting Flasks is an award and not a
+    /// spawn.
+    /// </summary>
+    public static readonly int[] TalismanPouchLots = [
+        10000,  // Stormveil, Margit
+        10050,  // Enia, for two great runes
+        101100  // Finger Reader Enia, Godfrey
+    ];
+
+    /// <summary>
+    /// What the opening hours of the game hand over, as item and event
+    /// together.
+    ///
+    /// Both halves are needed and they do different work. The event is
+    /// what stops the game awarding it a second time and what the menus
+    /// read to decide a thing is available; the item is what you
+    /// actually use. `UnlockWhetblades` beside this sets flags alone
+    /// because a whetblade is a token and nothing holds it -- a whistle
+    /// is not, and a flag without the whistle is a horse you cannot
+    /// call.
+    /// </summary>
+    public static readonly (int Item, long Event)[] StartingGifts = [
+        (0x40000082, 60100), // Spectral Steed Whistle, which is Torrent
+        (0x40001FDE, 60110), // Spirit Calling Bell, which is summons
+        (0x40002134, 60120), // Crafting Kit
+        (0x40001FE3, 60140), // Tailoring Tools
+        (0x400000FA, 60020)  // Flask of Wondrous Physick
+    ];
+
+    /// <summary>
+    /// The great runes, in the form that is worth having.
+    ///
+    /// Each exists twice: the one a boss drops, and the one a Divine
+    /// Tower gives back for it. Only the second does anything, so
+    /// these are the restored ones -- a run handed the other would
+    /// still owe the game a climb.
+    /// </summary>
+    public static readonly (int Item, long Event)[] GreatRunes = [
+        (0x400000BF, 191), // Godrick
+        (0x400000C0, 192), // Radahn
+        (0x400000C1, 193), // Morgott
+        (0x400000C2, 194), // Rykard
+        (0x400000C3, 195), // Mohg
+        (0x400000C4, 196), // Malenia
+        (0x40002760, 197)  // Great Rune of the Unborn, which is Rennala's
+    ];
+
+    /// <summary>
+    /// Melina's accord, which is what lets a run spend runes on levels.
+    ///
+    /// Captured with the event logger at the moment the offer was
+    /// accepted. Thirty-eight flags moved and this was the only global
+    /// one set: the rest that went true are map-local, saying the
+    /// conversation happened at that spot, and the globals that went
+    /// false are 4652-4657, 4670 and 4698, which is the game retiring
+    /// the offer it had waiting at every other grace.
+    ///
+    /// Only this one is set here. Clearing the others is the game
+    /// tidying up after itself and not a thing worth imitating.
+    /// </summary>
+    public static readonly long MelinasAccord = 4680;
+
     public static readonly long ClearDlc = 70;
     public static readonly long SeeUndergroundGraces = 82001;
     public static readonly long SeeDlcGraces = 82002;

@@ -12,6 +12,20 @@ using System.Windows.Media;
 
 public static class VersionChecker
 {
+    /// <summary>
+    /// Where this build comes from.
+    ///
+    /// The one place in the tool that knows which repository it belongs
+    /// to, and the one thing a fork has to change about its identity.
+    /// Left pointing upstream, a fork tells the person running it that an
+    /// update is available whenever upstream releases, and then sends them
+    /// to an executable without whatever the fork was for.
+    /// </summary>
+    private const string Repo = "SCRT-HQ/TarnishedTool-runlog-integration";
+
+    /// <summary>The tool this is a fork of, so anyone can go and get it.</summary>
+    private const string Upstream = "https://github.com/borgCode/TarnishedTool/releases/latest";
+
     public static async Task<(bool hasUpdate, bool checkFailed, Version currentVersion, Version webVersion)>
         CheckForUpdate()
     {
@@ -22,10 +36,10 @@ public static class VersionChecker
 
             var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.Add(
-                new ProductInfoHeaderValue("TarnishedTool", currentVersion.ToString()));
+                new ProductInfoHeaderValue("TarnishedTool-runlog-integration", currentVersion.ToString()));
 
             var response = await client.GetStringAsync(
-                "https://api.github.com/repos/borgCode/TarnishedTool/releases/latest");
+                "https://api.github.com/repos/" + Repo + "/releases/latest");
 
             int tagIndex = response.IndexOf("\"tag_name\":", StringComparison.OrdinalIgnoreCase);
             if (tagIndex == -1) return (false, true, currentVersion, null);
@@ -149,15 +163,17 @@ public static class VersionChecker
 
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                FileName = "https://github.com/borgCode/TarnishedTool/releases/latest",
+                FileName = "https://github.com/" + Repo + "/releases/latest",
                 UseShellExecute = true
             });
             updateWindow.Close();
         };
 
+        // The fork is not on Nexus and should not pretend to be. What is
+        // worth offering in its place is the tool this is a fork of.
         var nexusDownloadButton = new Button
         {
-            Content = "NexusMods",
+            Content = "Upstream",
             Width = 80,
             Height = 25,
             Margin = new Thickness(5)
@@ -169,7 +185,7 @@ public static class VersionChecker
 
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                FileName = "https://www.nexusmods.com/eldenring/mods/9277?tab=files",
+                FileName = Upstream,
                 UseShellExecute = true
             });
             updateWindow.Close();

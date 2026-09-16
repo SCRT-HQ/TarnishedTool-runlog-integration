@@ -130,6 +130,26 @@ public class SettingsManager
     public bool ActivateOnLaunchEnabled { get; set; }
     public string ActivateOnLaunchActionIds { get; set; } = "";
 
+    // The Control tab. The address carries a key, so it is the one setting
+    // in this file worth keeping out of a screenshot.
+    public string ControlAddress { get; set; } = "";
+    public bool ControlConnectOnStart { get; set; }
+    public string ControlAllowedOperations { get; set; } = "";
+    /// <summary>
+    /// On by default: a run that counts deaths wants them, and the host
+    /// otherwise sits there typing "I died" into a phone, which is the
+    /// bookkeeping this exists to remove. It is one tick to switch off,
+    /// and a settings file that already says false still says false.
+    /// </summary>
+    public bool ControlTellsOfDeath { get; set; } = true;
+    /// <summary>How much the Control tab's log says: 0 trouble only, 1 the usual, 2 every operation.</summary>
+    public int ControlChatter { get; set; } = 1;
+    /// <summary>
+    /// On by default: an effect somebody feels and is not told of, slower
+    /// or unable to roll, is one they would otherwise have to ask about.
+    /// </summary>
+    public bool ControlSaysInGame { get; set; } = true;
+
 
     private static string SettingsPath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
