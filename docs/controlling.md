@@ -2,7 +2,7 @@
 
 The Control tab connects Tarnished Tool to a WebSocket server you name: Streamer.bot, a Runlog run, or anything else that speaks the protocol below. Once it is connected, whatever is on that server can change your game while you are playing it. Chat redeeming channel points, a Runlog run drawing a curse at the table, a button on a stream deck: any of them can take your dodge away for ninety seconds, drop you on the other side of the map, or hand you a Golden Seed.
 
-What is on the other end is not the tab's business, and that is the point of it. The tab says what it can do, performs what comes back, and puts everything back afterwards. A controller nobody has written yet will work with it without a new build of this.
+What is on the other end is not the tab's business, and that is the point of it. The tab says what it can do, performs what comes back, and afterwards puts back what can be put back. A controller nobody has written yet will work with it without a new build of this.
 
 This is what that other end has to do.
 
@@ -75,7 +75,7 @@ Send only the operations `ops` lists. Anything else is refused by name and nothi
 | Field | What it does |
 | --- | --- |
 | `id` | Yours, and how you take it back. Sending the same id twice replaces the first rather than stacking a second. |
-| `label` | What a person sees in the tool's log. |
+| `label` | What a person sees in the tool's log, and on their screen in the game (see below). Write it for the player: `Slowed to a third` reads better than `curse-4`. |
 | `for` | Seconds. Leave it out and it holds until you say otherwise. |
 | `group` | Optional. Several effects can share one, and a `revert` naming the group takes all of them back together. |
 | `each` | Optional, and off unless said. Off, the operations are one effect: all of them land or none of them do, because a rule that makes somebody slow and blind is one rule and half of it is a different rule nobody wrote. On, they are a list of separate things, and one this build has no name for, or one switched off, or one that fails, takes itself out and leaves the rest standing. A run's terms are sent this way; a rule's operations are not. |
@@ -111,7 +111,7 @@ Every operation has to be one the person allowed. The Control tab lists them wit
 
 Nothing is written unless the game is attached, loaded and past the fade-in. An apply that arrives during a loading screen waits up to forty-five seconds, and is dropped with an answer if it waits longer. A warp refuses immediately instead, because arriving somewhere unexpected four minutes late is worse than not arriving.
 
-Everything comes back off: when its time runs out, when its group is reverted, when you say so, when the connection stays gone, when the game closes, when the tool closes. What it restores is what the player had, not a switch flipped the other way, so a setting somebody turned on by hand survives your borrowing it.
+Everything that holds something in force comes back off: when its time runs out, when its group is reverted, when you say so, when the connection stays gone, when the game closes, when the tool closes. What it restores is what the player had, not a switch flipped the other way, so a setting somebody turned on by hand survives your borrowing it. The one-way operations, marked so in the table below, are not undone by any of these: an item given stays given, and a warp is not walked back.
 
 You cannot read the game. There is no request for the player's health or position, and the only thing travelling the other way is what the tool volunteers, below.
 
@@ -129,6 +129,12 @@ The pane at the foot of the tab says what happened, newest first, forty lines de
 
 The first line says which build this is, by the time its file was written. Worth a glance when an operation you just added is refused by name: a build that cannot be copied over a running copy of itself leaves the old one in place, and says so only in the build output.
 
+## What the player sees
+
+An effect they would feel and not be told of is said on their screen, in the game's own status line, as it lands and as it lifts: the label on the way in, and the label with `lifted` on the way out. Several lifting together take one line. That covers `flag.set`, `value.set`, `value.add` and `speffect.apply`, the operations that hold something in force. A gift, a warp, a fall or a button press shows itself, so an apply made only of those says nothing. Nothing is said while the game is loading.
+
+Switched off by **Show server effect notifications** in the Control tab. It is the player's screen, so it is the player's switch; a source cannot ask for it.
+
 ## What the game tells you
 
 One frame, on the same socket, off by default:
@@ -141,7 +147,7 @@ It is a mention, not a command. Whatever is listening decides what it means and 
 
 A kind you do not know is ignored, so a later build saying more than `died` will not break an older controller.
 
-Switched on by **Say when I die** in the Control tab. There is no second address and no second key: if something is connected, it hears this, and if nothing is, nothing is sent.
+Switched on by **Relay deaths to server** in the Control tab. There is no second address and no second key: if something is connected, it hears this, and if nothing is, nothing is sent.
 
 ## A controller, in full
 
@@ -209,7 +215,7 @@ The controller this tab was written against, and the one that is known to work. 
 
 Two things are being set up and they have different lifetimes, which is worth knowing before the steps: the address and the ticked operations belong to this machine and are remembered, and the profile belongs to one run. Both are reached from inside a run, because that is where the panel lives, but only one of them is per-run.
 
-**On this machine, once.** In Runlog, open any run and go to **Settings → Stream → Control**. Press **Make a watch key**; the address completes itself with the key in it, `wss://runlog.scrthq.com/ws?k=…&as=control`, and you copy it. The key is shown that once, so if the address is lost, make another and the old one stops working. Paste it into **Address** on the Control tab, press **Connect**, and tick what you are willing to let a run do under **What a source may do here**. Switching settings and numbers is on already; anything that moves you, hands you an item or presses a button is off until you say so. The tool remembers all of it, so this does not come round again.
+**On this machine, once.** In Runlog, open any run and go to **Settings → Stream → Control**. Press **Make a watch key**; the address completes itself with the key in it, `wss://runlog.scrthq.com/ws?k=…&as=control`, and you copy it. The key is shown that once, so if the address is lost, make another and the old one stops working. Paste it into **Address** on the Control tab, press **Connect**, and tick what you are willing to let a run do under **Source actions**. Switching settings and numbers is on already; anything that moves you, hands you an item or presses a button is off until you say so. The tool remembers all of it, so this does not come round again.
 
 **In each run.** Under the same **Settings → Stream → Control**, pick the profile. A pack that ships one offers it in a press: *Use the one that ships with Elden Ring: Interference*. Otherwise choose from the list of built-in profiles, or **Import** a file somebody sent you. The panel says if a rule can never fire against the pack you are playing, which is the usual sign that a profile and a pack have drifted apart. Then play: a result lands, the tool performs it, and the log says what it did and for how long.
 
@@ -227,7 +233,7 @@ Put the same name in the **Player** box. A rule that names a seat then reaches t
 
 ### Telling the run you died
 
-Tick **Say when I die**. It travels on the socket already open, so there is nothing else to set up, and it arrives as an ask in the run's tray for the host to accept. The run has to be taking asks, under **Settings → Stream → Chat**, since attaching a tool is not the same as being allowed to move somebody's run.
+Tick **Relay deaths to server**. It travels on the socket already open, so there is nothing else to set up, and it arrives as an ask in the run's tray for the host to accept. The run has to be taking asks, under **Settings → Stream → Chat**, since attaching a tool is not the same as being allowed to move somebody's run.
 
 ### When nothing happens
 

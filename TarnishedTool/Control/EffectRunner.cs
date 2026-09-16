@@ -18,6 +18,11 @@ public sealed class LiveEffect
     /// <summary>When it comes off by itself, or null to hold until told.</summary>
     public DateTime? Until { get; set; }
     public List<RevertStep> Reverts { get; } = new();
+    /// <summary>
+    /// Whether the player would notice it without being told, and so is
+    /// told: see <see cref="OperationRegistry.Felt"/>.
+    /// </summary>
+    public bool Felt { get; set; }
 }
 
 /// <summary>
@@ -79,6 +84,13 @@ public sealed class EffectRunner
     public int WaitingCount => _waiting.Count;
 
     public event Action<string, Chatter> Logged;
+    /// <summary>
+    /// A line for the player rather than the pane, said in the game. An
+    /// effect they feel and are not told of, by its label, as it lands
+    /// and as it lifts. A gift says nothing here, since the game already
+    /// does.
+    /// </summary>
+    public event Action<string> Announced;
     /// <summary>id, whether it landed, when it comes off, and why not.</summary>
     public event Action<string, bool, DateTime?, string> Answered;
     public event Action Changed;
@@ -206,6 +218,7 @@ public sealed class EffectRunner
             {
                 Detail("  " + call.Op + " " + Describe(call.Args));
                 effect.Reverts.AddRange(_ops.Invoke(call.Op, new Args(call.Args)));
+                if (_ops.Felt(call.Op)) effect.Felt = true;
             }
             catch (Exception ex)
             {
@@ -237,6 +250,7 @@ public sealed class EffectRunner
         _live.Add(effect);
         Save();
         Log("Applied " + effect.Label + (lost > 0 ? " without " + lost + " of it" : string.Empty) + (effect.Until.HasValue ? " for " + frame.For + "s" : string.Empty));
+        if (effect.Felt) Announced?.Invoke(effect.Label);
         Answer(effect.Id, true, effect.Until, null);
         Changed?.Invoke();
     }
@@ -303,6 +317,7 @@ public sealed class EffectRunner
         foreach (var effect in going) _live.Remove(effect);
         Save();
         Log("Took back " + going.Count + (going.Count == 1 ? " effect" : " effects") + " from " + group);
+        Announce(Lifted(going));
         Changed?.Invoke();
     }
 
@@ -322,6 +337,9 @@ public sealed class EffectRunner
         _live.Remove(effect);
         Save();
         if (!quiet) Log("Took back " + effect.Label);
+        // Quiet is a re-send replacing itself, and "lifted" then the same
+        // label again would read as two things happening.
+        if (!quiet) Announce(Lifted(new[] { effect }));
         Changed?.Invoke();
     }
 
@@ -344,8 +362,10 @@ public sealed class EffectRunner
 
         foreach (var effect in Enumerable.Reverse(_live).ToList()) Undo(effect);
         Log("Took back " + _live.Count + (_live.Count == 1 ? " effect: " : " effects: ") + why);
+        var lifted = Lifted(_live);
         _live.Clear();
         Save();
+        Announce(lifted);
         Changed?.Invoke();
     }
 
@@ -379,6 +399,7 @@ public sealed class EffectRunner
         if (expired.Count > 0)
         {
             Save();
+            Announce(Lifted(expired));
             Changed?.Invoke();
         }
 
@@ -420,6 +441,28 @@ public sealed class EffectRunner
     }
 
     private static string Name(ApplyFrame frame) => string.IsNullOrEmpty(frame.Label) ? frame.Id : frame.Label;
+
+    /// <summary>
+    /// What to tell the player about these coming off, or null where
+    /// none of them was felt. Several come off together in one line,
+    /// since a screen is not a log: two are named, more are counted.
+    /// </summary>
+    private static string Lifted(IEnumerable<LiveEffect> effects)
+    {
+        var felt = effects.Where(e => e.Felt).Select(e => e.Label).ToList();
+        switch (felt.Count)
+        {
+            case 0: return null;
+            case 1: return felt[0] + " lifted";
+            case 2: return felt[0] + " and " + felt[1] + " lifted";
+            default: return felt.Count + " effects lifted";
+        }
+    }
+
+    private void Announce(string line)
+    {
+        if (line != null) Announced?.Invoke(line);
+    }
 
     /// <summary>An operation's arguments, for reading rather than parsing.</summary>
     private static string Describe(JsonElement args)

@@ -14,7 +14,7 @@
 
 This is a fork of [borgCode/TarnishedTool](https://github.com/borgCode/TarnishedTool) with one addition: a Control tab, which connects the tool to a WebSocket server you name, so something outside the game can change it while you play. Streamer.bot, so your chat and channel point redeems reach the game. A [Runlog](https://runlog.scrthq.com) run, so the dice on the table take your dodge away or move you across the map. Or anything of your own that can hold a socket open.
 
-Nothing in the tab names any particular service. It dials the address you paste in, says what it can do, performs what comes back, and puts everything back afterwards. What a source may do is yours to decide, operation by operation, in the tab; warps, items and button presses start switched off.
+Nothing in the tab names any particular service. It dials the address you paste in, says what it can do, performs what comes back, and afterwards puts back what can be put back: settings and numbers return to what they were and special effects come off, while items, runes and warps are one-way. What a source may do is yours to decide, operation by operation, in the tab; warps, items and button presses start switched off.
 
 [docs/controlling.md](docs/controlling.md) is how to drive it from something of your own. It includes a working controller short enough to read.
 

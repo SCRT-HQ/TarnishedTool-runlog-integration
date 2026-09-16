@@ -102,6 +102,13 @@ public static class Emevd
         public static EmevdCommand SetSpEffect(uint entityId, int spEffectId) => new(2004, 08, entityId, spEffectId);
         
         public static EmevdCommand ClearSpEffect(uint entityId, int spEffectId) => new(2004, 21, entityId, spEffectId);
+
+        /// <summary>
+        /// The small line at the top of the screen, by its id in the
+        /// EventTextForMap table. Does not pause the game or wait to be
+        /// dismissed.
+        /// </summary>
+        public static EmevdCommand DisplayStatusMessage(int messageId) => new(2007, 3, messageId, (byte)0);
         
     }
 }

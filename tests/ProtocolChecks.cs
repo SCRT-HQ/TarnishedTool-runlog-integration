@@ -99,6 +99,52 @@ static class Check
             Is("refuses the unknown", e.Message, "this build has no nope");
         }
 
+        // Which operations the player feels without being told. One that
+        // holds something in force is felt; a gift shows itself; a watch
+        // is held but happens to the run, not the player.
+        registry.RegisterOneShot("item.give", a => { });
+        registry.Register("watch.boss", a => new[] { RevertStep.Of("watch.stop", "token", "t") }, felt: false);
+        Is("a held operation is felt", registry.Felt("flag.set"), true);
+        Is("a gift is not", registry.Felt("item.give"), false);
+        Is("a watch is not", registry.Felt("watch.boss"), false);
+        Is("nor is what this build lacks", registry.Felt("nope"), false);
+
+        // What the player is told in the game: an effect they would feel
+        // and not be told of, by its label, on the way in and on the way
+        // out. A gift says nothing, since the game already does.
+        var felt = new OperationRegistry();
+        felt.Register("flag.set", a => new[] { RevertStep.Of("flag.set", "name", a.Text("name"), "value", false) });
+        felt.RegisterOneShot("item.give", a => { });
+        var allowing = new Consent();
+        allowing.Load("", felt.Names);
+        var ledger = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ProtocolChecks-" + Guid.NewGuid() + ".json");
+        var runner = new EffectRunner(felt, allowing, new RestoreLog(ledger), () => true);
+        var said = new List<string>();
+        runner.Announced += said.Add;
+        runner.Apply(Frames.Read("{\"t\":\"apply\",\"id\":\"curse-4\",\"label\":\"Scarlet Rot\",\"ops\":[{\"op\":\"flag.set\",\"args\":{\"name\":\"player.noRoll\",\"value\":true}}]}").Apply);
+        Is("a felt effect is announced", said.LastOrDefault(), "Scarlet Rot");
+        runner.Apply(Frames.Read("{\"t\":\"apply\",\"id\":\"gift\",\"label\":\"A sword\",\"ops\":[{\"op\":\"item.give\",\"args\":{\"id\":1}}]}").Apply);
+        Is("a gift is not", said.Count, 1);
+        runner.Apply(Frames.Read("{\"t\":\"apply\",\"id\":\"mixed\",\"label\":\"Rot and a sword\",\"ops\":[{\"op\":\"item.give\",\"args\":{\"id\":1}},{\"op\":\"flag.set\",\"args\":{\"name\":\"player.noRoll\",\"value\":true}}]}").Apply);
+        Is("one felt operation is enough", said.LastOrDefault(), "Rot and a sword");
+        runner.Revert("curse-4");
+        Is("and its end", said.LastOrDefault(), "Scarlet Rot lifted");
+        runner.Revert("gift");
+        Is("but not a gift's", said.Count, 3);
+        runner.Apply(Frames.Read("{\"t\":\"apply\",\"id\":\"r3a\",\"label\":\"Slow\",\"group\":\"round-3\",\"ops\":[{\"op\":\"flag.set\",\"args\":{\"name\":\"a\",\"value\":true}}]}").Apply);
+        runner.Apply(Frames.Read("{\"t\":\"apply\",\"id\":\"r3b\",\"label\":\"Blind\",\"group\":\"round-3\",\"ops\":[{\"op\":\"flag.set\",\"args\":{\"name\":\"b\",\"value\":true}}]}").Apply);
+        said.Clear();
+        runner.RevertGroup("round-3");
+        Is("a group ends in one line", string.Join("|", said), "Slow and Blind lifted");
+        runner.RevertGroup("round-3");
+        Is("an empty group says nothing", said.Count, 1);
+        said.Clear();
+        runner.RevertAll("the source asked");
+        Is("everything ends in one line", string.Join("|", said), "Rot and a sword lifted");
+        runner.RevertAll("the source asked again");
+        Is("nothing left says nothing", said.Count, 1);
+        System.IO.File.Delete(ledger);
+
         // The examples in docs/controlling.md, read by the same parser the
         // tool uses. Documentation that does not parse is worse than none.
         var doc = Frames.Read("{\"t\":\"apply\",\"id\":\"curse-4\",\"label\":\"Scarlet Rot\",\"for\":90,\"ops\":[{\"op\":\"flag.set\",\"args\":{\"name\":\"player.noRoll\",\"value\":true}},{\"op\":\"value.set\",\"args\":{\"name\":\"player.speed\",\"value\":0.8}}]}");

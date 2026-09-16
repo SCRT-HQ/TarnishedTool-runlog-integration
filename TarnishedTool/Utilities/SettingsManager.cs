@@ -144,6 +144,11 @@ public class SettingsManager
     public bool ControlTellsOfDeath { get; set; } = true;
     /// <summary>How much the Control tab's log says: 0 trouble only, 1 the usual, 2 every operation.</summary>
     public int ControlChatter { get; set; } = 1;
+    /// <summary>
+    /// On by default: an effect somebody feels and is not told of, slower
+    /// or unable to roll, is one they would otherwise have to ask about.
+    /// </summary>
+    public bool ControlSaysInGame { get; set; } = true;
 
 
     private static string SettingsPath => Path.Combine(

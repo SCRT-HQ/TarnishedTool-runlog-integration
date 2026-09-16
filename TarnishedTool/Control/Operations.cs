@@ -122,18 +122,39 @@ public sealed class OperationRegistry
 {
     private readonly Dictionary<string, Func<Args, IEnumerable<RevertStep>>> _ops =
         new(StringComparer.Ordinal);
+    private readonly HashSet<string> _felt = new(StringComparer.Ordinal);
 
-    public void Register(string name, Func<Args, IEnumerable<RevertStep>> handler) => _ops[name] = handler;
+    /// <summary>
+    /// One that holds something in force until it is put back. Felt unless
+    /// said otherwise: a player who is slower, or cannot roll, or takes
+    /// double damage, is told nothing by the game, so the tool says it.
+    /// A watch is held the same way but happens to the run, not to them.
+    /// </summary>
+    public void Register(string name, Func<Args, IEnumerable<RevertStep>> handler, bool felt = true)
+    {
+        _ops[name] = handler;
+        if (felt) _felt.Add(name);
+        else _felt.Remove(name);
+    }
 
-    /// <summary>One that changes nothing that could be put back.</summary>
-    public void RegisterOneShot(string name, Action<Args> handler) =>
+    /// <summary>
+    /// One that changes nothing that could be put back. Never felt: a
+    /// gift, a warp, or a fall announces itself.
+    /// </summary>
+    public void RegisterOneShot(string name, Action<Args> handler)
+    {
         _ops[name] = args =>
         {
             handler(args);
             return Array.Empty<RevertStep>();
         };
+        _felt.Remove(name);
+    }
 
     public bool Has(string name) => _ops.ContainsKey(name);
+
+    /// <summary>Whether the player would notice this without being told.</summary>
+    public bool Felt(string name) => _felt.Contains(name);
 
     public IEnumerable<string> Names => _ops.Keys.OrderBy(n => n, StringComparer.Ordinal);
 

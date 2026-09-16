@@ -66,6 +66,7 @@ namespace TarnishedTool
             IItemService itemService = new ItemService(_memoryService);
             ISpEffectService spEffectService = new SpEffectService(_memoryService, reminderService);
             IEmevdService emevdService = new EmevdService(_memoryService);
+            IGameMessageService gameMessageService = new GameMessageService(_memoryService, emevdService, _stateService);
             IFlaskService flaskService = new FlaskService(ezStateService, _memoryService);
             IEventLogReader eventLogReader = new EventLogReader(_memoryService);
             IParamRepository paramRepository = new ParamRepository();
@@ -133,7 +134,7 @@ namespace TarnishedTool
                 playerViewModel, enemyViewModel, utilityViewModel, travelViewModel,
                 spEffectService, playerService, travelService, itemService,
                 _memoryService, _stateService, gameTickService, hotkeyManager,
-                eventLogReader
+                eventLogReader, gameMessageService
             );
 
             SettingsViewModel settingsViewModel = new SettingsViewModel(

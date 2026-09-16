@@ -11,10 +11,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="160" />
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,10">
@@ -42,15 +39,21 @@
                 <Button Content="Disconnect" Command="{Binding DisconnectCommand}" Width="90" />
             </StackPanel>
 
-            <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- Across both columns, so the right one stays the width of its two buttons and the address keeps the rest. -->
+            <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <CheckBox Content="Connect on start"
                           IsChecked="{Binding ConnectOnStart}"
                           VerticalAlignment="Center"
                           Margin="0,0,12,0" />
-                <CheckBox Content="Say when I die"
+                <CheckBox Content="Relay deaths to server"
                           IsChecked="{Binding TellsOfDeath}"
                           VerticalAlignment="Center"
-                          ToolTip="Tells whatever is connected that you died, on the same socket. It is a mention: what happens about it is the other end's business." />
+                          ToolTip="Sends a death event to the connected server over the open socket each time the player dies. The server decides what to do with it; nothing else is sent." />
+                <CheckBox Content="Show server effect notifications"
+                          IsChecked="{Binding SaysInGame}"
+                          VerticalAlignment="Center"
+                          Margin="12,0,0,0"
+                          ToolTip="Shows an in-game status message, using the effect's label, when a server-applied effect is applied or removed. Only effects with no visible feedback of their own are announced: flags, values and special effects. Item, rune and warp operations are not." />
             </StackPanel>
         </Grid>
 
@@ -59,14 +62,26 @@
             <TextBlock Text="{Binding Status}" FontWeight="Bold" Margin="0,0,16,0" />
             <TextBlock Text="In force: " />
             <TextBlock Text="{Binding LiveCount}" FontWeight="Bold" Margin="0,0,16,0" />
-            <Button Content="Take everything off"
+            <Button Content="Remove applied effects"
                     Command="{Binding TakeEverythingOffCommand}"
-                    Width="140" />
+                    ToolTip="Reverts every effect the server still holds in force: flags and values go back to their previous settings, applied special effects are removed, and watches stop. Items, runes, warps and button presses are one-way and are not undone."
+                    Width="170" />
         </StackPanel>
 
-        <TextBlock Grid.Row="3" Text="What a source may do here" Margin="0,0,0,5" />
-        <ListBox Grid.Row="4"
-                 Margin="0,0,0,10"
+        <!-- Side by side: the operation list is narrow and tall, the log wide and tall. -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="170" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Source actions" VerticalAlignment="Center" Margin="0,0,0,5" />
+        <ListBox Grid.Row="1" Grid.Column="0"
+                 Margin="0,0,10,0"
                  ItemsSource="{Binding Operations}"
                  BorderThickness="1"
                  BorderBrush="#333"
@@ -91,22 +106,28 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <DockPanel Grid.Row="5" Margin="0,0,0,5" LastChildFill="False">
-            <TextBlock Text="What happened" VerticalAlignment="Center" DockPanel.Dock="Left" />
+        <DockPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,5" LastChildFill="False">
+            <TextBlock Text="Connection log" VerticalAlignment="Center" DockPanel.Dock="Left" />
+            <Button DockPanel.Dock="Right"
+                    Content="Clear"
+                    Command="{Binding ClearLogCommand}"
+                    ToolTip="Empties the connection log. Nothing applied is affected."
+                    Width="60"
+                    Margin="8,0,0,0" />
             <ComboBox DockPanel.Dock="Right"
                       Width="110"
                       VerticalAlignment="Center"
-                      ToolTip="How much this pane says. Trouble only, the usual, or every operation with its arguments while you are working out a profile."
+                      ToolTip="How much the log records. Quiet: errors and refusals only. Normal: also each effect applied or removed. Everything: also every operation as it runs, with its arguments."
                       ItemsSource="{Binding Chatters}"
                       SelectedItem="{Binding Chatter, Mode=TwoWay}" />
             <TextBlock DockPanel.Dock="Right"
-                       Text="Say"
+                       Text="Verbosity"
                        VerticalAlignment="Center"
                        Margin="0,0,6,0"
                        Foreground="#999" />
         </DockPanel>
 
-        <ListBox Grid.Row="6"
+        <ListBox Grid.Row="1" Grid.Column="1"
                  ItemsSource="{Binding Log}"
                  BorderThickness="1"
                  BorderBrush="#333"
@@ -130,5 +151,6 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
+        </Grid>
     </Grid>
 </UserControl>

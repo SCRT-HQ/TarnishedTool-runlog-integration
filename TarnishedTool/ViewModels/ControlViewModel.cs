@@ -75,12 +75,14 @@ public class ControlViewModel : BaseViewModel
     private readonly DispatcherTimer _dropTimer;
     private readonly DeathWatcher _deaths;
     private readonly Watches _watches;
+    private readonly IGameMessageService _messages;
 
     private bool _isLoaded;
     private string _status = "Off";
     private string _address;
     private bool _tellsOfDeath;
     private bool _connectOnStart;
+    private bool _saysInGame;
     private int _liveCount;
 
     public ControlViewModel(
@@ -96,10 +98,12 @@ public class ControlViewModel : BaseViewModel
         IStateService state,
         IGameTickService tick,
         HotkeyManager hotkeys,
-        IEventLogReader eventLog)
+        IEventLogReader eventLog,
+        IGameMessageService messages)
     {
         _memory = memory;
         _state = state;
+        _messages = messages;
 
         _registry = new OperationRegistry();
         // What the game is asked to report on, and what happens when it
@@ -130,6 +134,7 @@ public class ControlViewModel : BaseViewModel
 
         _runner = new EffectRunner(_registry, _consent, RestoreLog.Beside("TarnishedTool"), IsReady);
         _runner.Logged += Say;
+        _runner.Announced += Announce;
         _runner.Changed += () => LiveCount = _runner.Live.Count;
         _runner.Answered += (id, ok, until, error) => _client.Send(Frames.Applied(id, ok, until, error));
 
@@ -156,6 +161,7 @@ public class ControlViewModel : BaseViewModel
 
         _address = SettingsManager.Default.ControlAddress;
         _tellsOfDeath = SettingsManager.Default.ControlTellsOfDeath;
+        _saysInGame = SettingsManager.Default.ControlSaysInGame;
 
         // Which build this is, said once, in the pane somebody is already
         // reading when they are wondering why a new operation is not
@@ -201,11 +207,13 @@ public class ControlViewModel : BaseViewModel
         {
             _deaths.Stop();
             _runner.RevertAll("the tool is closing");
+            _messages.Release();
         });
 
         ConnectCommand = new DelegateCommand(Connect, () => !IsConnected);
         DisconnectCommand = new DelegateCommand(Disconnect, () => IsConnected);
         TakeEverythingOffCommand = new DelegateCommand(() => _runner.RevertAll("asked to, here"));
+        ClearLogCommand = new DelegateCommand(Log.Clear);
 
         if (_connectOnStart && !string.IsNullOrWhiteSpace(_address)) Connect();
     }
@@ -218,6 +226,7 @@ public class ControlViewModel : BaseViewModel
     public ICommand ConnectCommand { get; }
     public ICommand DisconnectCommand { get; }
     public ICommand TakeEverythingOffCommand { get; }
+    public ICommand ClearLogCommand { get; }
 
     public string Status
     {
@@ -290,6 +299,39 @@ public class ControlViewModel : BaseViewModel
             if (!SetProperty(ref _connectOnStart, value)) return;
             SettingsManager.Default.ControlConnectOnStart = value;
             SettingsManager.Default.Save();
+        }
+    }
+
+    /// <summary>
+    /// Show an effect's label on the player's screen as it lands and as it
+    /// lifts, for the ones they would feel and not be told of.
+    /// </summary>
+    public bool SaysInGame
+    {
+        get => _saysInGame;
+        set
+        {
+            if (!SetProperty(ref _saysInGame, value)) return;
+            SettingsManager.Default.ControlSaysInGame = value;
+            SettingsManager.Default.Save();
+        }
+    }
+
+    /// <summary>
+    /// Said in the game, if the game is there to say it in. An effect
+    /// that lifts during a loading screen goes unsaid: the player is
+    /// somewhere else by then.
+    /// </summary>
+    private void Announce(string line)
+    {
+        if (!_saysInGame || !IsReady()) return;
+        try
+        {
+            _messages.Show(line);
+        }
+        catch (Exception ex)
+        {
+            Say("Could not say it in the game: " + ex.Message, Chatter.Quiet);
         }
     }
 
